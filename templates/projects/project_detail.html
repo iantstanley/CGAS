@@ -1,0 +1,615 @@
+<!-- templates/projects/project_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ project.title }} - CGAS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Project: {{ project.project_number }} - {{ project.title }}</h1>
+    <div>
+        <a href="{% url 'project-list' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <a href="{% url 'project-update' pk=project.id %}" class="btn btn-warning me-2">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{% url 'project-print' pk=project.id %}" class="btn btn-info me-2" target="_blank">
+            <i class="fas fa-print"></i> Print
+        </a>
+        <a href="{% url 'project-delete' pk=project.id %}" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete
+        </a>
+    </div>
+</div>
+
+<!-- Project Details Cards in Tabs -->
+<ul class="nav nav-tabs mb-4" id="projectTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+            Overview
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="property-tab" data-bs-toggle="tab" data-bs-target="#property" type="button" role="tab">
+            Property Details
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+            Documents
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab">
+            Contact Info
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
+            Notes & Comments
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Overview Tab -->
+    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Project Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 200px;">Project Number:</th>
+                                <td>{{ project.project_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>Title:</th>
+                                <td>{{ project.title }}</td>
+                            </tr>
+                            <tr>
+                                <th>Client:</th>
+                                <td>
+                                    <a href="{% url 'client-detail' pk=project.client.id %}" class="text-info">
+                                        {{ project.client.name }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    {% if project.status == 'admin' %}
+                                        <span class="badge bg-secondary">Admin</span>
+                                    {% elif project.status == 'field_ready' %}
+                                        <span class="badge bg-success">Field Ready</span>
+                                    {% elif project.status == 'mapping' %}
+                                        <span class="badge bg-info">Mapping</span>
+                                    {% elif project.status == 'pls_review' %}
+                                        <span class="badge bg-warning">PLS Review</span>
+                                    {% elif project.status == 'on_hold' %}
+                                        <span class="badge bg-secondary">On Hold</span>
+                                    {% elif project.status == 'construction_ongoing' %}
+                                        <span class="badge bg-primary">Construction Ongoing</span>
+                                    {% elif project.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif project.status == 'in_progress' %}
+                                        <span class="badge bg-primary">In Progress</span>
+                                    {% elif project.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% elif project.status == 'cancelled' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 200px;">Start Date:</th>
+                                <td>{{ project.start_date|default:"Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <th>End Date:</th>
+                                <td>{{ project.end_date|default:"Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Quoted Price:</th>
+                                <td>
+                                    {% if project.quoted_price %}
+                                        ${{ project.quoted_price|floatformat:2 }}
+                                    {% else %}
+                                        Not specified
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Quoted Time Frame:</th>
+                                <td>{{ project.quoted_time_frame|default:"Not specified" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5>Description</h5>
+                        <p>{{ project.description|default:"No description provided"|linebreaks }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Team Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Assigned Team Members</h5>
+                        {% if project.assigned_to.exists %}
+                            <ul class="list-group bg-dark">
+                                {% for user in project.assigned_to.all %}
+                                    <li class="list-group-item bg-dark text-light border-secondary">
+                                        {{ user.get_full_name|default:user.email }}
+                                        {% if user.position %}({{ user.position }}){% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No team members assigned yet.</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h5>System Information</h5>
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 200px;">Created By:</th>
+                                <td>{{ project.created_by.get_full_name|default:project.created_by.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Created:</th>
+                                <td>{{ project.created_at|date:"F j, Y, g:i a" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Updated:</th>
+                                <td>{{ project.updated_at|date:"F j, Y, g:i a" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Comments in Overview Tab -->
+        <div class="card bg-dark text-light">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Recent Comments</h5>
+                <a href="#comments" class="btn btn-sm btn-info" data-bs-toggle="tab" data-bs-target="#comments">
+                    View All Comments
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Add Comment Form -->
+                <form method="post" action="{% url 'project-add-comment' pk=project.id %}">
+                    {% csrf_token %}
+                    <div class="input-group mb-3">
+                        <textarea name="text" class="form-control bg-dark text-light" placeholder="Add a comment..."></textarea>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </form>
+                
+                <!-- Recent Comments (show only 3 most recent) -->
+                {% if project.comments.exists %}
+                    <div class="comments-list">
+                        {% for comment in project.comments.all|slice:":3" %}
+                            <div class="comment card bg-dark text-light mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ comment.user.get_full_name|default:comment.user.email }}</strong>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">{{ comment.created_at|date:"F j, Y, g:i a" }}</small>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    {{ comment.text|linebreaks }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No comments yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Property Details Tab -->
+    <div class="tab-pane fade" id="property" role="tabpanel">
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Property Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 200px;">Legal Name for Survey:</th>
+                                <td>{{ project.legal_name_for_survey|default:"Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Property Address:</th>
+                                <td>{{ project.property_address|default:"Not specified"|linebreaks }}</td>
+                            </tr>
+                            <tr>
+                                <th>Property Tax Parcel #:</th>
+                                <td>{{ project.property_tax_parcel|default:"Not specified" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 200px;">Flood Map Number:</th>
+                                <td>{{ project.flood_map_number|default:"Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Base Flood Elevation:</th>
+                                <td>{{ project.base_flood_elevation|default:"Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Location:</th>
+                                <td>{{ project.location|default:"Not specified" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5>Property Deeds</h5>
+                        {% if project.property_deeds.exists %}
+                            <table class="table table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Book</th>
+                                        <th>Page</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for deed in project.property_deeds.all %}
+                                        <tr>
+                                            <td>{{ deed.book }}</td>
+                                            <td>{{ deed.page }}</td>
+                                            <td>{{ deed.description|default:"" }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No property deed information added.</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Property Maps</h5>
+                        {% if project.property_maps.exists %}
+                            <table class="table table-dark">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>File</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for map in project.property_maps.all %}
+                                        <tr>
+                                            <td>{{ map.name }}</td>
+                                            <td>{{ map.description|default:"" }}</td>
+                                            <td>
+                                                <a href="{{ map.file.url }}" class="btn btn-sm btn-info" target="_blank">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No property maps uploaded.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Documents Tab -->
+    <div class="tab-pane fade" id="documents" role="tabpanel">
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Legal Contract</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p>
+                            <strong>Has Legal Contract:</strong> 
+                            {% if project.has_legal_contract %}
+                                <span class="badge bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge bg-danger">No</span>
+                            {% endif %}
+                        </p>
+                        
+                        {% if project.contract_document %}
+                            <p>
+                                <strong>Contract Document:</strong> 
+                                <a href="{{ project.contract_document.url }}" class="btn btn-info btn-sm" target="_blank">
+                                    <i class="fas fa-download"></i> Download Contract
+                                </a>
+                            </p>
+                        {% else %}
+                            <p>No contract document uploaded.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card bg-dark text-light">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Project Attachments</h5>
+                    <a href="{% url 'project-add-attachment' pk=project.id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Add Attachment
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if project.attachments.exists %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Uploaded</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attachment in project.attachments.all %}
+                                    <tr>
+                                        <td>{{ attachment.name }}</td>
+                                        <td>{{ attachment.description|default:"" }}</td>
+                                        <td>{{ attachment.uploaded_at|date:"F j, Y" }}</td>
+                                        <td>
+                                            <a href="{{ attachment.file.url }}" class="btn btn-sm btn-info me-1" target="_blank">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <a href="{% url 'project-delete-attachment' pk=project.id attachment_id=attachment.id %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No attachments uploaded for this project.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contact Info Tab -->
+    <div class="tab-pane fade" id="contact" role="tabpanel">
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Client Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Client Email Addresses</h5>
+                        <table class="table table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Primary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for email in project.client_emails.all %}
+                                    <tr>
+                                        <td>
+                                            <a href="mailto:{{ email.email }}">{{ email.email }}</a>
+                                        </td>
+                                        <td>
+                                            {% if email.is_primary %}
+                                                <span class="badge bg-success">Primary</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="2">No client emails added.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Billing Email Addresses</h5>
+                        <table class="table table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Primary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for email in project.billing_emails.all %}
+                                    <tr>
+                                        <td>
+                                            <a href="mailto:{{ email.email }}">{{ email.email }}</a>
+                                        </td>
+                                        <td>
+                                            {% if email.is_primary %}
+                                                <span class="badge bg-success">Primary</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="2">No billing emails added.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5>Phone Numbers</h5>
+                        <table class="table table-dark">
+                            <thead>
+                                <tr>
+                                    <th>Number</th>
+                                    <th>Description</th>
+                                    <th>Primary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for phone in project.client_phones.all %}
+                                    <tr>
+                                        <td>
+                                            <a href="tel:{{ phone.phone }}">{{ phone.phone }}</a>
+                                        </td>
+                                        <td>{{ phone.description|default:"" }}</td>
+                                        <td>
+                                            {% if phone.is_primary %}
+                                                <span class="badge bg-success">Primary</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3">No phone numbers added.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Client Information</h5>
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 150px;">Client Name:</th>
+                                <td>{{ project.client.name }}</td>
+                            </tr>
+                            {% if project.client.company_name %}
+                            <tr>
+                                <th>Company:</th>
+                                <td>{{ project.client.company_name }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Contact Person:</th>
+                                <td>{{ project.client.contact_person|default:"Not specified" }}</td>
+                            </tr>
+                            <tr>
+                                <th>View Client:</th>
+                                <td>
+                                    <a href="{% url 'client-detail' pk=project.client.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-user"></i> View Full Client Details
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notes & Comments Tab -->
+    <div class="tab-pane fade" id="comments" role="tabpanel">
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Project Notes</h5>
+            </div>
+            <div class="card-body">
+                {{ project.notes|default:"No notes added."|linebreaks }}
+            </div>
+        </div>
+        
+        <div class="card bg-dark text-light">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Comments</h5>
+            </div>
+            <div class="card-body">
+                <!-- Comment Form -->
+                <form method="post" action="{% url 'project-add-comment' pk=project.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="text" class="form-control bg-dark text-light" rows="3" placeholder="Add a comment..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Comment</button>
+                </form>
+                
+                <hr>
+                
+                <!-- Comments List -->
+                {% if project.comments.exists %}
+                    <div class="comments-list">
+                        {% for comment in project.comments.all %}
+                            <div class="comment card bg-dark text-light mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ comment.user.get_full_name|default:comment.user.email }}</strong>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">{{ comment.created_at|date:"F j, Y, g:i a" }}</small>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    {{ comment.text|linebreaks }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No comments yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Activate tab based on hash in URL
+    $(document).ready(function() {
+        var hash = window.location.hash;
+        if (hash) {
+            $('#projectTabs a[href="' + hash + '"]').tab('show');
+        }
+        
+        // Change hash when tab is clicked
+        $('#projectTabs a').on('click', function(e) {
+            window.location.hash = $(this).attr('href');
+        });
+    });
+</script>
+{% endblock %}

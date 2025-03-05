@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit{% else %}Add New{% endif %} Calendar Event - Coastal Geomatics Admin Suite
+{% endblock %}
+
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    /* Custom styling for Select2 to match dark theme */
+    .select2-container--bootstrap-5 .select2-selection {
+        background-color: var(--bg-medium);
+        border-color: var(--border-medium);
+        color: var(--text-light);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        color: var(--text-light);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown {
+        background-color: var(--bg-medium);
+        border-color: var(--border-medium);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__option {
+        color: var(--text-light);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__option--highlighted {
+        background-color: var(--primary);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown .select2-search__field {
+        background-color: var(--bg-darker);
+        color: var(--text-light);
+        border-color: var(--border-medium);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-calendar-alt me-2"></i> 
+        {% if form.instance.pk %}Edit{% else %}Add New{% endif %} Calendar Event
+    </h2>
+    <div>
+        <a href="{% url 'calendar' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Calendar
+        </a>
+    </div>
+</div>
+
+<div class="card bg-dark mb-4">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_title" class="form-label">Event Title*</label>
+                </div>
+                <div class="col-md-9">
+                    {{ form.title|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_project" class="form-label">Related Project</label>
+                </div>
+                <div class="col-md-9">
+                    <select id="id_project" name="project" class="form-select project-select" style="width: 100%;">
+                        <option value="">---------</option>
+                        {% for project in form.fields.project.queryset %}
+                        <option value="{{ project.id }}" {% if form.project.value == project.id %}selected{% endif %}>
+                            {{ project.project_number }} - {{ project.title }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Search by project number or title</small>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_field_crew" class="form-label">Assigned Field Crew</label>
+                </div>
+                <div class="col-md-9">
+                    {{ form.field_crew|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_start_time" class="form-label">Start Time*</label>
+                </div>
+                <div class="col-md-9">
+                    {{ form.start_time|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_end_time" class="form-label">End Time*</label>
+                </div>
+                <div class="col-md-9">
+                    {{ form.end_time|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_all_day" class="form-label">All Day Event</label>
+                </div>
+                <div class="col-md-9">
+                    {{ form.all_day|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_location" class="form-label">Location</label>
+                </div>
+                <div class="col-md-9">
+                    {{ form.location|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="id_notes" class="form-label">Notes</label>
+                </div>
+                <div class="col-md-9">
+                    {{ form.notes|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Save Event
+                </button>
+                <a href="{% url 'calendar' %}" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for project dropdown
+        $('.project-select').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search for a project...',
+            allowClear: true,
+            width: '100%',
+            dropdownParent: $('.project-select').parent(),
+            minimumInputLength: 1,  // Start searching after at least 1 character
+            templateResult: formatProjectResult,
+            templateSelection: formatProjectSelection,
+            escapeMarkup: function(markup) {
+                return markup;  // Allow HTML in the results
+            },
+            matcher: function(params, data) {
+                // If there are no search terms, return all of the data
+                if ($.trim(params.term) === '') {
+                    return data;
+                }
+
+                const term = params.term.toLowerCase();
+                const text = data.text.toLowerCase();
+                
+                // Check if the project number or title contains the search term
+                if (text.indexOf(term) > -1) {
+                    return data;
+                }
+
+                // Return `null` if the term should not be displayed
+                return null;
+            }
+        });
+        
+        // Format the project display in dropdown
+        function formatProjectResult(project) {
+            if (!project.id) {
+                return project.text;
+            }
+            
+            const parts = project.text.split(' - ');
+            let projectNumber = parts[0];
+            let projectTitle = parts.slice(1).join(' - ');
+            
+            // Create a nicer formatted display for search results
+            return '<div class="select2-result-project">' +
+                   '<div class="select2-result-project__number"><strong>' + projectNumber + '</strong></div>' +
+                   '<div class="select2-result-project__title">' + projectTitle + '</div>' +
+                   '</div>';
+        }
+        
+        // Format the selected project display
+        function formatProjectSelection(project) {
+            return project.text;
+        }
+        
+        // Fix Select2 dark mode appearance
+        $('.select2-selection__rendered').css('color', 'var(--text-light)');
+        
+        // Ensure dropdown works well with dark theme
+        $('.project-select').on('select2:open', function() {
+            $('.select2-search__field').css({
+                'background-color': 'var(--bg-darker)',
+                'color': 'var(--text-light)',
+                'border-color': 'var(--border-medium)'
+            });
+        });
+    });
+</script>
+{% endblock %}

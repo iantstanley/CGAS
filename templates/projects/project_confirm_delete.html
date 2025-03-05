@@ -1,0 +1,36 @@
+<!-- templates/projects/project_confirm_delete.html -->
+{% extends 'base.html' %}
+
+{% block title %}Delete Project - CGAS{% endblock %}
+
+{% block content %}
+<div class="card bg-dark text-light">
+    <div class="card-header">
+        <h2>Delete Project</h2>
+    </div>
+    <div class="card-body">
+        <p>Are you sure you want to delete the project "{{ project.title }}"?</p>
+        <p class="text-danger"><strong>Warning:</strong> This action cannot be undone.</p>
+        
+        <div class="alert alert-info">
+            <h5>Project Information</h5>
+            <ul>
+                <li><strong>Title:</strong> {{ project.title }}</li>
+                <li><strong>Client:</strong> {{ project.client.name }}</li>
+                <li><strong>Status:</strong> {{ project.get_status_display }}</li>
+                <li><strong>Created:</strong> {{ project.created_at|date:"F j, Y" }}</li>
+            </ul>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Yes, Delete Project
+            </button>
+            <a href="{% url 'project-detail' pk=project.id %}" class="btn btn-secondary ms-2">
+                <i class="fas fa-times"></i> Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

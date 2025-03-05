@@ -1,0 +1,481 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ field_crew.crew_id }} - Field Crew - CGAS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-0">{{ field_crew.crew_id }}</h1>
+        <div class="text-muted">Field Crew Details</div>
+    </div>
+    <div>
+        <a href="{% url 'field-crew-update' field_crew.pk %}" class="btn btn-warning me-2">
+            <i class="fas fa-edit me-2"></i>Edit
+        </a>
+        <a href="{% url 'field-crew-delete' field_crew.pk %}" class="btn btn-danger">
+            <i class="fas fa-trash me-2"></i>Delete
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Crew Information -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users-cog me-2"></i>Crew Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-primary">Crew ID</h6>
+                    <p>{{ field_crew.crew_id }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-primary">Contact Information</h6>
+                    {% if field_crew.contact_phone or field_crew.contact_email or field_crew.contact_address %}
+                        {% if field_crew.contact_phone %}
+                            <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ field_crew.contact_phone }}</p>
+                        {% endif %}
+                        {% if field_crew.contact_email %}
+                            <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ field_crew.contact_email }}</p>
+                        {% endif %}
+                        {% if field_crew.contact_address %}
+                            <p class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>{{ field_crew.contact_address|linebreaks }}</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted">No contact information provided.</p>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-primary">Crew Members</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            {% if field_crew.members.all %}
+                                <ul class="list-unstyled mb-0">
+                                    {% for member in field_crew.members.all %}
+                                        <li class="mb-2">
+                                            <div><strong>{{ member.name }}</strong>{% if member.position %} <span class="text-muted">({{ member.position }})</span>{% endif %}</div>
+                                            {% if member.phone or member.email %}
+                                                <div class="small text-muted">
+                                                    {% if member.phone %}<span class="me-2"><i class="fas fa-phone me-1"></i>{{ member.phone }}</span>{% endif %}
+                                                    {% if member.email %}<span><i class="fas fa-envelope me-1"></i>{{ member.email }}</span>{% endif %}
+                                                </div>
+                                            {% endif %}
+                                            <div class="mt-1">
+                                                <a href="{% url 'field-crew-delete-member' field_crew.pk member.pk %}" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash me-1"></i>Remove
+                                                </a>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted">No crew members assigned.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Add Crew Member Form -->
+                    <form method="post" action="{% url 'field-crew-add-member' field_crew.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <h6 class="text-primary">Add Crew Member</h6>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="name" class="form-control form-control-sm" placeholder="Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="position" class="form-control form-control-sm" placeholder="Position">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <input type="tel" name="phone" class="form-control form-control-sm" placeholder="Phone">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="email" name="email" class="form-control form-control-sm" placeholder="Email">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Add Member</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div>
+                    <h6 class="text-primary">Notes</h6>
+                    {% if field_crew.notes %}
+                        <p>{{ field_crew.notes|linebreaks }}</p>
+                    {% else %}
+                        <p class="text-muted">No notes provided.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Vehicle Information -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-truck me-2"></i>Vehicle Information
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if field_crew.vehicle %}
+                    <div class="mb-3">
+                        <h6 class="text-primary">Vehicle Details</h6>
+                        <p class="mb-0">{{ field_crew.vehicle.year }} {{ field_crew.vehicle.make }} {{ field_crew.vehicle.model }}</p>
+                        <p class="mb-0">License Plate: {{ field_crew.vehicle.license_plate }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-primary">Maintenance Information</h6>
+                        <p class="mb-0">
+                            Tag Renewal: {{ field_crew.vehicle.tag_renewal_date }}
+                            {% if field_crew.vehicle.needs_tag_renewal %}
+                                <span class="badge bg-warning" title="Tag renewal needed">Renewal Due</span>
+                            {% endif %}
+                        </p>
+                        <p class="mb-0">
+                            Last Oil Change: {{ field_crew.vehicle.last_oil_change }}
+                            {% if field_crew.vehicle.needs_oil_change %}
+                                <span class="badge bg-warning" title="Oil change needed">Oil Change Due</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h6 class="text-primary">Vehicle Notes</h6>
+                        {% if field_crew.vehicle.notes %}
+                            <p>{{ field_crew.vehicle.notes|linebreaks }}</p>
+                        {% else %}
+                            <p class="text-muted">No vehicle notes provided.</p>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">No vehicle information provided.</p>
+                    
+                    <!-- Add Vehicle Form -->
+                    <form method="post" action="{% url 'field-crew-add-vehicle' field_crew.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <h6 class="text-primary">Add Vehicle</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" name="make" class="form-control form-control-sm" placeholder="Make" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" name="model" class="form-control form-control-sm" placeholder="Model" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" name="year" class="form-control form-control-sm" placeholder="Year" required min="1900" max="2100">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <input type="text" name="license_plate" class="form-control form-control-sm" placeholder="License Plate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="date" name="tag_renewal_date" class="form-control form-control-sm" placeholder="Tag Renewal Date" required>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-12">
+                                <input type="date" name="last_oil_change" class="form-control form-control-sm" placeholder="Last Oil Change Date" required>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-12">
+                                <textarea name="notes" class="form-control form-control-sm" placeholder="Vehicle Notes" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Add Vehicle</button>
+                        </div>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Survey Equipment -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>Survey Equipment
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Total Stations -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-primary mb-0">Total Stations</h6>
+                    </div>
+                    {% if field_crew.total_stations.all %}
+                        <ul class="list-unstyled">
+                            {% for station in field_crew.total_stations.all %}
+                                <li class="mb-2">
+                                    <div><strong>{{ station.model_number }}</strong></div>
+                                    <div class="small text-muted">
+                                        Last Calibration: {{ station.last_calibration }}
+                                        {% if station.needs_calibration %}
+                                            <span class="badge bg-warning">Calibration Due</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="{% url 'field-crew-delete-total-station' field_crew.pk station.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No total stations registered.</p>
+                    {% endif %}
+                    
+                    <!-- Add Total Station Form -->
+                    <form method="post" action="{% url 'field-crew-add-total-station' field_crew.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="model_number" class="form-control form-control-sm" placeholder="Model Number" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="date" name="last_calibration" class="form-control form-control-sm" placeholder="Last Calibration Date" required>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Add Total Station</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- GPS Receivers -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-primary mb-0">GPS Receivers</h6>
+                    </div>
+                    {% if field_crew.gps_receivers.all %}
+                        <ul class="list-unstyled">
+                            {% for receiver in field_crew.gps_receivers.all %}
+                                <li class="mb-2">
+                                    <div><strong>{{ receiver.get_receiver_type_display }}:</strong> {{ receiver.model_number }}</div>
+                                    <div class="mt-1">
+                                        <a href="{% url 'field-crew-delete-gps-receiver' field_crew.pk receiver.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No GPS receivers registered.</p>
+                    {% endif %}
+                    
+                    <!-- Add GPS Receiver Form -->
+                    <form method="post" action="{% url 'field-crew-add-gps-receiver' field_crew.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="model_number" class="form-control form-control-sm" placeholder="Model Number" required>
+                            </div>
+                            <div class="col-md-6">
+                                <select name="receiver_type" class="form-select form-select-sm" required>
+                                    <option value="">Select Type</option>
+                                    <option value="BASE">Base</option>
+                                    <option value="ROVER">Rover</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Add GPS Receiver</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Data Collectors -->
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-primary mb-0">Data Collectors</h6>
+                    </div>
+                    {% if field_crew.data_collectors.all %}
+                        <ul class="list-unstyled">
+                            {% for collector in field_crew.data_collectors.all %}
+                                <li class="mb-2">
+                                    <div><strong>{{ collector.model_number }}</strong></div>
+                                    <div class="small text-muted">
+                                        {% if collector.software_version %}SurvCE/PC Version: {{ collector.software_version }}{% endif %}
+                                        {% if collector.has_ts_module %}<span class="badge bg-success me-1">TS Module</span>{% endif %}
+                                        {% if collector.has_gps_module %}<span class="badge bg-success">GPS Module</span>{% endif %}
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="{% url 'field-crew-delete-data-collector' field_crew.pk collector.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No data collectors registered.</p>
+                    {% endif %}
+                    
+                    <!-- Add Data Collector Form -->
+                    <form method="post" action="{% url 'field-crew-add-data-collector' field_crew.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="model_number" class="form-control form-control-sm" placeholder="Model Number" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="software_version" class="form-control form-control-sm" placeholder="SurvCE/PC Version">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="has_ts_module" id="has_ts_module" value="true">
+                                    <label class="form-check-label" for="has_ts_module">Has TS Module</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="has_gps_module" id="has_gps_module" value="true">
+                                    <label class="form-check-label" for="has_gps_module">Has GPS Module</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Add Data Collector</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Network & Connectivity -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-wifi me-2"></i>Network & Connectivity
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Mobile Hotspots -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-primary mb-0">Mobile Hotspots</h6>
+                    </div>
+                    {% if field_crew.mobile_hotspots.all %}
+                        <ul class="list-unstyled">
+                            {% for hotspot in field_crew.mobile_hotspots.all %}
+                                <li class="mb-2">
+                                    <div><strong>{{ hotspot.make_model }}</strong></div>
+                                    <div class="small text-muted">
+                                        {% if hotspot.phone_number %}Phone: {{ hotspot.phone_number }}{% endif %}
+                                    </div>
+                                    <div class="small text-muted">
+                                        Network Name: {{ hotspot.network_name }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        Password: {{ hotspot.network_password }}
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="{% url 'field-crew-delete-hotspot' field_crew.pk hotspot.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No mobile hotspots registered.</p>
+                    {% endif %}
+                    
+                    <!-- Add Mobile Hotspot Form -->
+                    <form method="post" action="{% url 'field-crew-add-hotspot' field_crew.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <input type="text" name="make_model" class="form-control form-control-sm" placeholder="Make/Model" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="phone_number" class="form-control form-control-sm" placeholder="Phone Number">
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <input type="text" name="network_name" class="form-control form-control-sm" placeholder="Network Name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="network_password" class="form-control form-control-sm" placeholder="Network Password" required>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Add Mobile Hotspot</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- RTK Network Credentials -->
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-primary mb-0">RTK Network Credentials</h6>
+                    </div>
+                    {% if field_crew.rtk_networks.all %}
+                        <ul class="list-unstyled">
+                            {% for network in field_crew.rtk_networks.all %}
+                                <li class="mb-2">
+                                    <div><strong>{{ network.network_name }}</strong></div>
+                                    <div class="small text-muted">
+                                        Username: {{ network.username }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        Password: {{ network.password }}
+                                    </div>
+                                    <div class="mt-1">
+                                        <a href="{% url 'field-crew-delete-rtk-network' field_crew.pk network.pk %}" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No RTK network credentials registered.</p>
+                    {% endif %}
+                    
+                    <!-- Add RTK Network Credentials Form -->
+                    <form method="post" action="{% url 'field-crew-add-rtk-network' field_crew.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-md-12">
+                                <input type="text" name="network_name" class="form-control form-control-sm" placeholder="Network Name" required>
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <input type="text" name="username" class="form-control form-control-sm" placeholder="Username" required>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="password" class="form-control form-control-sm" placeholder="Password" required>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-sm btn-primary">Add RTK Network</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

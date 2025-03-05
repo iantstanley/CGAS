@@ -1,0 +1,105 @@
+/* Calendar Module Styles */
+
+/* Main Calendar Container */
+#calendar {
+    height: calc(100vh - 200px);
+    background-color: var(--bg-dark);
+    padding: 15px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Calendar Body */
+.fc-view-harness {
+    background-color: var(--bg-medium);
+}
+
+/* Calendar Title */
+.fc-toolbar-title {
+    color: var(--text-light);
+}
+
+/* Calendar Buttons */
+.fc-button-primary {
+    background-color: var(--primary) !important;
+    border-color: var(--primary-dark) !important;
+}
+
+.fc-button-primary:hover {
+    background-color: var(--primary-dark) !important;
+}
+
+.fc-button-active {
+    background-color: var(--primary-dark) !important;
+}
+
+/* Calendar Events */
+.fc-event {
+    cursor: pointer;
+    border: none !important;
+}
+
+.fc-event-title {
+    font-weight: 600;
+}
+
+/* Calendar Day Headers */
+.fc-daygrid-day-top {
+    justify-content: center;
+}
+
+.fc-col-header-cell {
+    background-color: var(--bg-darker);
+}
+
+/* Calendar Days */
+.fc-daygrid-day {
+    background-color: var(--bg-dark);
+}
+
+.fc-day-today {
+    background-color: var(--bg-medium) !important;
+}
+
+/* Calendar Text */
+.fc-timegrid-slot-label, 
+.fc-timegrid-axis-cushion, 
+.fc-col-header-cell-cushion, 
+.fc-daygrid-day-number {
+    color: var(--text-light);
+}
+
+/* Event Modals */
+.event-modal .modal-content {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+}
+
+.event-modal .modal-header {
+    border-bottom: 1px solid var(--border-medium);
+}
+
+.event-modal .modal-footer {
+    border-top: 1px solid var(--border-medium);
+}
+
+/* Crew Filter Buttons */
+.crew-filter-btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+    color: white !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.crew-filter-btn.active {
+    box-shadow: 0 0 0 3px white;
+    outline: none;
+}
+
+/* Calendar event colors for specific field crews */
+.event-admin { background-color: #3498db; border-color: #2980b9; }
+.event-crew1 { background-color: #e74c3c; border-color: #c0392b; }
+.event-crew2 { background-color: #9b59b6; border-color: #8e44ad; }
+.event-crew3 { background-color: #f39c12; border-color: #d35400; }
+.event-crew4 { background-color: #2ecc71; border-color: #27ae60; }
+.event-crew5 { background-color: #f1c40f; border-color: #d4ac0d; }

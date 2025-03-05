@@ -1,0 +1,346 @@
+<!-- templates/projects/project_print.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project {{ project.project_number }} - {{ project.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .section h2 {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #ccc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .label {
+            font-weight: bold;
+            width: 200px;
+        }
+        @media print {
+            body {
+                padding: 0;
+                font-size: 12pt;
+            }
+            .no-print {
+                display: none;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align: right; margin-bottom: 20px;">
+        <button onclick="window.print()">Print</button>
+        <button onclick="window.close()">Close</button>
+    </div>
+
+    <div class="header">
+        <h1>Project Information: {{ project.project_number }}</h1>
+        <h2>{{ project.title }}</h2>
+        <p>Generated: {{ now|date:"F j, Y, g:i a" }}</p>
+    </div>
+
+    <div class="section">
+        <h2>Basic Information</h2>
+        <table>
+            <tr>
+                <td class="label">Project Number:</td>
+                <td>{{ project.project_number }}</td>
+            </tr>
+            <tr>
+                <td class="label">Title:</td>
+                <td>{{ project.title }}</td>
+            </tr>
+            <tr>
+                <td class="label">Status:</td>
+                <td>{{ project.get_status_display }}</td>
+            </tr>
+            <tr>
+                <td class="label">Start Date:</td>
+                <td>{{ project.start_date|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">End Date:</td>
+                <td>{{ project.end_date|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Location:</td>
+                <td>{{ project.location|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Description:</td>
+                <td>{{ project.description|default:"Not specified"|linebreaks }}</td>
+            </tr>
+            <tr>
+                <td class="label">Notes:</td>
+                <td>{{ project.notes|default:"Not specified"|linebreaks }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Client Information</h2>
+        <table>
+            <tr>
+                <td class="label">Client Name:</td>
+                <td>{{ project.client.name }}</td>
+            </tr>
+            {% if project.client.company_name %}
+            <tr>
+                <td class="label">Company:</td>
+                <td>{{ project.client.company_name }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td class="label">Contact Person:</td>
+                <td>{{ project.client.contact_person|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Phone:</td>
+                <td>{{ project.client.phone|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Email:</td>
+                <td>{{ project.client.email|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Billing Email:</td>
+                <td>{{ project.client.billing_email|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Address:</td>
+                <td>
+                    {{ project.client.address|default:"" }}
+                    {% if project.client.city or project.client.state or project.client.zip_code %}
+                        <br>
+                        {{ project.client.city|default:"" }}{% if project.client.city and project.client.state %}, {% endif %}
+                        {{ project.client.state|default:"" }} {{ project.client.zip_code|default:"" }}
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        
+        {% if project.client_emails.exists or project.billing_emails.exists or project.client_phones.exists %}
+        <h3>Additional Contact Information</h3>
+            
+            {% if project.client_emails.exists %}
+            <h4>Client Email Addresses</h4>
+            <table>
+                <tr>
+                    <th>Email</th>
+                    <th>Primary</th>
+                </tr>
+                {% for email in project.client_emails.all %}
+                <tr>
+                    <td>{{ email.email }}</td>
+                    <td>{% if email.is_primary %}Yes{% else %}No{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+            
+            {% if project.billing_emails.exists %}
+            <h4>Billing Email Addresses</h4>
+            <table>
+                <tr>
+                    <th>Email</th>
+                    <th>Primary</th>
+                </tr>
+                {% for email in project.billing_emails.all %}
+                <tr>
+                    <td>{{ email.email }}</td>
+                    <td>{% if email.is_primary %}Yes{% else %}No{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+            
+            {% if project.client_phones.exists %}
+            <h4>Phone Numbers</h4>
+            <table>
+                <tr>
+                    <th>Number</th>
+                    <th>Description</th>
+                    <th>Primary</th>
+                </tr>
+                {% for phone in project.client_phones.all %}
+                <tr>
+                    <td>{{ phone.phone }}</td>
+                    <td>{{ phone.description|default:"" }}</td>
+                    <td>{% if phone.is_primary %}Yes{% else %}No{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="section">
+        <h2>Property Information</h2>
+        <table>
+            <tr>
+                <td class="label">Legal Name for Survey:</td>
+                <td>{{ project.legal_name_for_survey|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Property Address:</td>
+                <td>{{ project.property_address|default:"Not specified"|linebreaks }}</td>
+            </tr>
+            <tr>
+                <td class="label">Property Tax Parcel #:</td>
+                <td>{{ project.property_tax_parcel|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Flood Map Number:</td>
+                <td>{{ project.flood_map_number|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Base Flood Elevation:</td>
+                <td>{{ project.base_flood_elevation|default:"Not specified" }}</td>
+            </tr>
+        </table>
+        
+        {% if project.property_deeds.exists %}
+        <h3>Property Deeds</h3>
+        <table>
+            <tr>
+                <th>Book</th>
+                <th>Page</th>
+                <th>Description</th>
+            </tr>
+            {% for deed in project.property_deeds.all %}
+            <tr>
+                <td>{{ deed.book }}</td>
+                <td>{{ deed.page }}</td>
+                <td>{{ deed.description|default:"" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Financial Information</h2>
+        <table>
+            <tr>
+                <td class="label">Quoted Price:</td>
+                <td>
+                    {% if project.quoted_price %}
+                        ${{ project.quoted_price|floatformat:2 }}
+                    {% else %}
+                        Not specified
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="label">Quoted Time Frame:</td>
+                <td>{{ project.quoted_time_frame|default:"Not specified" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Legal Contract:</td>
+                <td>
+                    {% if project.has_legal_contract %}
+                        Yes
+                    {% else %}
+                        No
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Project Team</h2>
+        <table>
+            <tr>
+                <td class="label">Created By:</td>
+                <td>{{ project.created_by.get_full_name|default:project.created_by.email }}</td>
+            </tr>
+            <tr>
+                <td class="label">Created:</td>
+                <td>{{ project.created_at|date:"F j, Y, g:i a" }}</td>
+            </tr>
+            <tr>
+                <td class="label">Last Updated:</td>
+                <td>{{ project.updated_at|date:"F j, Y, g:i a" }}</td>
+            </tr>
+        </table>
+        
+        {% if project.assigned_to.exists %}
+        <h3>Assigned Team Members</h3>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Position</th>
+            </tr>
+            {% for user in project.assigned_to.all %}
+            <tr>
+                <td>{{ user.get_full_name|default:"-" }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.position|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+
+    {% if project.attachments.exists %}
+    <div class="section">
+        <h2>Project Attachments</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Uploaded</th>
+            </tr>
+            {% for attachment in project.attachments.all %}
+            <tr>
+                <td>{{ attachment.name }}</td>
+                <td>{{ attachment.description|default:"" }}</td>
+                <td>{{ attachment.uploaded_at|date:"F j, Y" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="footer" style="text-align: center; margin-top: 30px; font-size: 0.8em;">
+        <p>Coastal Geomatics Admin Suite - Project Report - Page 1</p>
+    </div>
+</body>
+</html>

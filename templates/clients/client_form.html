@@ -1,0 +1,22 @@
+<!-- templates/clients/client_form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Client: {{ form.instance.name }}{% else %}Add New Client{% endif %} - CGAS
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{% if form.instance.pk %}Edit Client: {{ form.instance.name }}{% else %}Add New Client{% endif %}</h1>
+    <a href="{% url 'client-list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="card bg-dark text-light">
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+</div>
+{% endblock %}

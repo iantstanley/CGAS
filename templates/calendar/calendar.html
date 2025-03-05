@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Calendar - Coastal Geomatics Admin Suite{% endblock %}
+
+{% block extra_css %}
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/cgas-calendar.css' %}">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<style>
+    #calendar {
+        height: calc(100vh - 200px);
+        background-color: var(--bg-dark);
+        padding: 15px;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .fc-view-harness {
+        background-color: var(--bg-medium);
+    }
+    
+    .fc-toolbar-title {
+        color: var(--text-light);
+    }
+    
+    .fc-button-primary {
+        background-color: var(--primary) !important;
+        border-color: var(--primary-dark) !important;
+    }
+    
+    .fc-button-primary:hover {
+        background-color: var(--primary-dark) !important;
+    }
+    
+    .fc-button-active {
+        background-color: var(--primary-dark) !important;
+    }
+    
+    .fc-event {
+        cursor: pointer;
+        border: none !important;
+    }
+    
+    .fc-event-title {
+        font-weight: 600;
+    }
+    
+    .fc-daygrid-day-top {
+        justify-content: center;
+    }
+    
+    .fc-col-header-cell {
+        background-color: var(--bg-darker);
+    }
+    
+    .fc-daygrid-day {
+        background-color: var(--bg-dark);
+    }
+    
+    .fc-day-today {
+        background-color: var(--bg-medium) !important;
+    }
+    
+    .fc-timegrid-slot-label, .fc-timegrid-axis-cushion, .fc-col-header-cell-cushion, .fc-daygrid-day-number {
+        color: var(--text-light);
+    }
+    
+    .modal-content {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+    }
+    
+    #createEventModal .modal-header, #eventDetailModal .modal-header {
+        border-bottom: 1px solid var(--border-medium);
+    }
+    
+    #createEventModal .modal-footer, #eventDetailModal .modal-footer {
+        border-top: 1px solid var(--border-medium);
+    }
+    
+    .crew-filter-btn {
+        margin-right: 5px;
+        margin-bottom: 5px;
+        color: white !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .crew-filter-btn.active {
+        box-shadow: 0 0 0 3px white;
+    }
+
+    /* Custom styling for Select2 to match dark theme */
+    .select2-container--bootstrap-5 .select2-selection {
+        background-color: var(--bg-medium);
+        border-color: var(--border-medium);
+        color: var(--text-light);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        color: var(--text-light);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown {
+        background-color: var(--bg-medium);
+        border-color: var(--border-medium);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__option {
+        color: var(--text-light);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown .select2-results__option--highlighted {
+        background-color: var(--primary);
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown .select2-search__field {
+        background-color: var(--bg-darker);
+        color: var(--text-light);
+        border-color: var(--border-medium);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="fas fa-calendar-alt me-2"></i> Calendar</h2>
+    <div>
+        <a href="{% url 'calendar-event-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Add Event
+        </a>
+    </div>
+</div>
+
+<div class="card bg-dark mb-4">
+    <div class="card-body">
+        <div class="mb-3">
+            <h5 class="mb-3">Filters</h5>
+            <div class="mb-3">
+                <label class="form-label">Field Crews:</label>
+                <div>
+                    <button type="button" class="btn btn-sm btn-secondary crew-filter-btn" data-crew-id="all">All Crews</button>
+                    {% for crew in field_crews %}
+                    <button type="button" class="btn btn-sm crew-filter-btn" 
+                            style="background-color: {% if crew.crew_id == 'ADMIN' %}#3498db{% elif crew.crew_id == 'Crew 1' %}#e74c3c{% elif crew.crew_id == 'Crew 2' %}#9b59b6{% elif crew.crew_id == 'Crew 3' %}#f39c12{% elif crew.crew_id == 'Crew 4' %}#2ecc71{% elif crew.crew_id == 'Crew 5' %}#f1c40f{% else %}{{ crew.color|default:'#3788d8' }}{% endif %};" 
+                            data-crew-id="{{ crew.id }}">
+                        {{ crew.crew_id }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">View:</label>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-sm btn-secondary" id="dayView">Day</button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="weekView">Week</button>
+                    <button type="button" class="btn btn-sm btn-secondary" id="monthView">Month</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="calendar"></div>
+
+<!-- Event Detail Modal -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventTitle"></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="eventDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-primary" id="editEventBtn">Edit</a>
+                <a href="#" class="btn btn-danger" id="deleteEventBtn">Delete</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Create Event Modal -->
+<div class="modal fade" id="createEventModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Event</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="quickEventTitle" class="form-label">Title</label>
+                    <input type="text" class="form-control bg-medium text-light" id="quickEventTitle">
+                </div>
+                <div class="mb-3">
+                    <label for="quickEventProject" class="form-label">Project</label>
+                    <select class="form-select bg-medium text-light project-select" id="quickEventProject" style="width: 100%;">
+                        <option value="">None</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.project_number }} - {{ project.title }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Search by project number or title</small>
+                </div>
+                <div class="mb-3">
+                    <label for="quickEventFieldCrew" class="form-label">Field Crew</label>
+                    <select class="form-select bg-medium text-light" id="quickEventFieldCrew">
+                        <option value="">None</option>
+                        {% for crew in field_crews %}
+                        <option value="{{ crew.id }}">{{ crew.crew_id }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="saveQuickEvent" class="btn btn-primary">Save Event</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Crew color mapping for reference
+        const crewColors = {
+            'ADMIN': '#3498db',   // Blue
+            'Crew 1': '#e74c3c',  // Pink/Red
+            'Crew 2': '#9b59b6',  // Purple
+            'Crew 3': '#f39c12',  // Orange
+            'Crew 4': '#2ecc71',  // Green
+            'Crew 5': '#f1c40f'   // Yellow
+        };
+        
+        // Initialize FullCalendar
+        const calendarEl = document.getElementById('calendar');
+        
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            allDaySlot: true,
+            slotMinTime: '07:00:00',
+            slotMaxTime: '19:00:00',
+            height: 'auto',
+            timeZone: 'local',
+            editable: true,
+            selectable: true,
+            nowIndicator: true,
+            eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            
+            // Events source
+            events: {
+                url: '{% url "calendar-events-json" %}',
+                method: 'GET',
+                failure: function() {
+                    alert('There was an error loading calendar events.');
+                },
+                // Override event colors based on field crew
+                eventDataTransform: function(eventData) {
+                    // Try to set colors based on field crew name
+                    if (eventData.extendedProps && eventData.extendedProps.field_crew_name) {
+                        const crewName = eventData.extendedProps.field_crew_name;
+                        for (const [key, value] of Object.entries(crewColors)) {
+                            if (crewName.includes(key)) {
+                                eventData.backgroundColor = value;
+                                eventData.borderColor = value;
+                                break;
+                            }
+                        }
+                    }
+                    return eventData;
+                }
+            },
+            
+            // Event click handler
+            eventClick: function(info) {
+                showEventDetails(info.event);
+                info.jsEvent.preventDefault();
+            },
+            
+            // Date click handler (for adding events)
+            dateClick: function(info) {
+                showQuickCreateModal(info.date);
+            },
+            
+            // Event drag and drop
+            eventDrop: function(info) {
+                updateEventDates(info.event);
+            },
+            
+            // Event resize
+            eventResize: function(info) {
+                updateEventDates(info.event);
+            },
+            
+            // Select date range
+            select: function(info) {
+                showQuickCreateModal(info.start, info.end, info.allDay);
+            }
+        });
+        
+        calendar.render();
+        
+        // Initialize Select2 for project dropdowns
+        $(document).ready(function() {
+            $('.project-select').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search for a project...',
+                allowClear: true,
+                dropdownParent: $('#createEventModal'),
+                matcher: function(params, data) {
+                    // If there are no search terms, return all of the data
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+
+                    // Search by project number or title
+                    if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                        return data;
+                    }
+
+                    // Return `null` if the term should not be displayed
+                    return null;
+                }
+            });
+            
+            // Re-initialize Select2 when modal is shown
+            $('#createEventModal').on('shown.bs.modal', function() {
+                $('.project-select').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Search for a project...',
+                    allowClear: true,
+                    dropdownParent: $('#createEventModal'),
+                    matcher: function(params, data) {
+                        // If there are no search terms, return all of the data
+                        if ($.trim(params.term) === '') {
+                            return data;
+                        }
+
+                        // Search by project number or title
+                        if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                            return data;
+                        }
+
+                        // Return `null` if the term should not be displayed
+                        return null;
+                    }
+                });
+            });
+            
+            // Properly handle modal closure and backdrop removal
+            $('#createEventModal').on('hidden.bs.modal', function() {
+                // Ensure the backdrop and all modal-related elements are removed
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                $('body').css('padding-right', '');
+            });
+        });
+        
+        // View buttons
+        document.getElementById('dayView').addEventListener('click', function() {
+            calendar.changeView('timeGridDay');
+        });
+        
+        document.getElementById('weekView').addEventListener('click', function() {
+            calendar.changeView('timeGridWeek');
+        });
+        
+        document.getElementById('monthView').addEventListener('click', function() {
+            calendar.changeView('dayGridMonth');
+        });
+        
+        // Field crew filters - FIXED
+        document.querySelectorAll('.crew-filter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const crewId = this.getAttribute('data-crew-id');
+                
+                // Reset active state
+                document.querySelectorAll('.crew-filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Filter events - FIXED
+                if (crewId === 'all') {
+                    // Remove existing sources and add fresh one without filters
+                    calendar.getEventSources().forEach(source => source.remove());
+                    calendar.addEventSource({
+                        url: '{% url "calendar-events-json" %}',
+                        method: 'GET'
+                    });
+                } else {
+                    // Remove existing sources and add fresh one with filter
+                    calendar.getEventSources().forEach(source => source.remove());
+                    calendar.addEventSource({
+                        url: '{% url "calendar-events-json" %}?field_crew=' + crewId,
+                        method: 'GET'
+                    });
+                }
+            });
+        });
+        
+        // Set week view button as active by default
+        document.getElementById('weekView').classList.add('active');
+        document.querySelector('.crew-filter-btn[data-crew-id="all"]').classList.add('active');
+        
+        // Function to show event details
+        function showEventDetails(event) {
+            const modal = new bootstrap.Modal(document.getElementById('eventDetailModal'));
+            
+            // Set modal title
+            document.getElementById('eventTitle').textContent = event.title;
+            
+            // Build event details HTML
+            let detailsHtml = '';
+            
+            // Date and time
+            const startDate = event.start ? new Date(event.start).toLocaleDateString() : 'N/A';
+            const startTime = event.start ? new Date(event.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+            const endDate = event.end ? new Date(event.end).toLocaleDateString() : 'N/A';
+            const endTime = event.end ? new Date(event.end).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+            
+            detailsHtml += `<p><strong>Date:</strong> ${startDate}`;
+            if (startDate !== endDate) {
+                detailsHtml += ` to ${endDate}`;
+            }
+            detailsHtml += `</p>`;
+            
+            if (!event.allDay) {
+                detailsHtml += `<p><strong>Time:</strong> ${startTime} to ${endTime}</p>`;
+            } else {
+                detailsHtml += `<p><strong>All Day Event</strong></p>`;
+            }
+            
+            // Project details
+            if (event.extendedProps.project_number) {
+                detailsHtml += `<p><strong>Project:</strong> ${event.extendedProps.project_number} - ${event.extendedProps.project_title}</p>`;
+            }
+            
+            // Field crew details
+            if (event.extendedProps.field_crew_name) {
+                detailsHtml += `<p><strong>Field Crew:</strong> ${event.extendedProps.field_crew_name}</p>`;
+            }
+            
+            // Location
+            if (event.extendedProps.location) {
+                detailsHtml += `<p><strong>Location:</strong> ${event.extendedProps.location}</p>`;
+            }
+            
+            // Notes
+            if (event.extendedProps.notes) {
+                detailsHtml += `<p><strong>Notes:</strong></p>`;
+                detailsHtml += `<p>${event.extendedProps.notes}</p>`;
+            }
+
+            if (event.extendedProps.project_id) {
+    const projectUrl = `{% url 'project-detail' 0 %}`.replace('0', event.extendedProps.project_id);
+    detailsHtml += `<p><strong>Project:</strong> ${event.extendedProps.project_number} - ${event.extendedProps.project_title}</p>`;
+    detailsHtml += `<a href="${projectUrl}" class="btn btn-info btn-sm mt-2">
+                       <i class="fas fa-clipboard-list me-1"></i> VIEW PROJECT ${event.extendedProps.project_number}
+                    </a>`;
+}
+            
+            // Set the details content
+            document.getElementById('eventDetails').innerHTML = detailsHtml;
+            
+            // Set button URLs
+            document.getElementById('editEventBtn').href = `{% url 'calendar-event-update' 0 %}`.replace('0', event.id);
+            document.getElementById('deleteEventBtn').href = `{% url 'calendar-event-delete' 0 %}`.replace('0', event.id);
+            
+            // Show modal
+            modal.show();
+        }
+        
+        // Function to show quick create event modal
+        function showQuickCreateModal(start, end, allDay = false) {
+            const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+            
+            // Clear form
+            document.getElementById('quickEventTitle').value = '';
+            document.getElementById('quickEventProject').value = '';
+            document.getElementById('quickEventFieldCrew').value = '';
+            
+            // Store date information for later use
+            document.getElementById('createEventModal').dataset.start = start.toISOString();
+            document.getElementById('createEventModal').dataset.end = end ? end.toISOString() : new Date(start.getTime() + 60*60*1000).toISOString();
+            document.getElementById('createEventModal').dataset.allDay = allDay;
+            
+            // Show modal
+            modal.show();
+        }
+        
+        // Quick event save handler
+        document.getElementById('saveQuickEvent').addEventListener('click', function() {
+            const title = document.getElementById('quickEventTitle').value;
+            const projectId = document.getElementById('quickEventProject').value;
+            const fieldCrewId = document.getElementById('quickEventFieldCrew').value;
+            const modal = document.getElementById('createEventModal');
+            const start = modal.dataset.start;
+            const end = modal.dataset.end;
+            const allDay = modal.dataset.allDay === 'true';
+            
+            if (!title) {
+                alert('Please enter an event title');
+                return;
+            }
+            
+            // Send request to create event
+            fetch('{% url "calendar-quick-add-event" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    title: title,
+                    project_id: projectId,
+                    field_crew_id: fieldCrewId,
+                    start: start,
+                    end: end,
+                    allDay: allDay
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Close modal properly
+                    const modalInstance = bootstrap.Modal.getInstance(modal);
+                    modalInstance.hide();
+                    
+                    // Ensure the backdrop and all modal-related elements are removed
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+                    $('body').css('padding-right', '');
+                    
+                    // Refresh calendar
+                    calendar.refetchEvents();
+                } else {
+                    alert('Error creating event: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the event.');
+            });
+        });
+        
+        // Function to update event dates after drag or resize
+        function updateEventDates(event) {
+            fetch('{% url "calendar-event-drop" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    id: event.id,
+                    start: event.start.toISOString(),
+                    end: event.end ? event.end.toISOString() : null,
+                    allDay: event.allDay
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== 'success') {
+                    alert('Error updating event: ' + data.message);
+                    calendar.refetchEvents();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the event.');
+                calendar.refetchEvents();
+            });
+        }
+        
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}

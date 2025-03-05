@@ -1,0 +1,830 @@
+<!-- templates/projects/project_form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Project: {{ form.instance.title }}{% else %}Add Project{% endif %} - CGAS
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css">
+<style>
+    .tab-content {
+        padding-top: 20px;
+    }
+    .select2-container--default .select2-selection--multiple,
+    .select2-container--default .select2-selection--single {
+        background-color: var(--bg-medium);
+        border: 1px solid var(--border);
+        color: var(--text-light);
+        width: 100% !important;
+        min-height: 38px;
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: var(--bg-dark);
+        border: 1px solid var(--border);
+        color: var(--text-light);
+    }
+    .select2-dropdown {
+        background-color: var(--bg-medium);
+        border: 1px solid var(--border);
+        color: var(--text-light);
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: var(--primary);
+    }
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: var(--secondary);
+    }
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: var(--text-light);
+    }
+    .required-field .control-label:after {
+        content: "*";
+        color: red;
+    }
+    /* File upload styling */
+    .file-upload-section {
+        margin-top: 20px;
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+    }
+    .custom-file-input:lang(en)~.custom-file-label::after {
+        content: "Browse";
+    }
+    .file-upload-preview {
+        margin-top: 10px;
+    }
+    /* Form field styling - adding this to ensure all inputs match the theme */
+    input[type="text"], 
+    input[type="email"], 
+    input[type="number"], 
+    input[type="date"], 
+    input[type="file"],
+    textarea,
+    select,
+    .form-control {
+        background-color: var(--bg-medium) !important;
+        color: var(--text-light) !important;
+        border: 1px solid var(--border) !important;
+        width: 100% !important;
+        height: 38px;
+        padding: 0.375rem 0.75rem;
+    }
+    /* Special handling for textarea to allow proper height */
+    textarea.form-control {
+        height: auto !important;
+        min-height: 80px;
+    }
+    /* Ensure select dropdowns have proper styling */
+    select option {
+        background-color: var(--bg-medium);
+        color: var(--text-light);
+    }
+    /* Fix select2 container width */
+    .select2-container {
+        width: 100% !important;
+    }
+    /* Improve form layout and spacing */
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+    /* Fix checkbox alignment */
+    .form-check {
+        padding-left: 1.5rem;
+    }
+    .form-check-input {
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{% if form.instance.pk %}Edit Project: {{ form.instance.title }}{% else %}Add New Project{% endif %}</h1>
+    <div>
+        <a href="{% url 'project-list' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        {% if form.instance.pk %}
+        <a href="{% url 'project-detail' pk=form.instance.pk %}" class="btn btn-info">
+            <i class="fas fa-eye"></i> View Details
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card bg-dark text-light">
+    <div class="card-body">
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Please correct the errors below:</strong>
+                {{ form.errors }}
+            </div>
+        {% endif %}
+        
+        <form method="post" id="project-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs mb-3" id="projectTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-info" type="button" role="tab">
+                        Basic Information
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="property-tab" data-bs-toggle="tab" data-bs-target="#property-info" type="button" role="tab">
+                        Property Information
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="contract-tab" data-bs-toggle="tab" data-bs-target="#contract-info" type="button" role="tab">
+                        Contract & Financial
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team-info" type="button" role="tab">
+                        Team & Notes
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Basic Information Tab -->
+                <div class="tab-pane fade show active" id="basic-info" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_project_number" class="form-label">Project Number</label>
+                                {{ form.project_number }}
+                                <small class="text-muted">Optional. Will be auto-generated if left blank.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_title" class="form-label">Title</label>
+                                {{ form.title }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_client" class="form-label">Client</label>
+                                {{ form.client }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_status" class="form-label">Status</label>
+                                {{ form.status }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_start_date" class="form-label">Start Date</label>
+                                {{ form.start_date }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_end_date" class="form-label">End Date</label>
+                                {{ form.end_date }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_location" class="form-label">Location</label>
+                                {{ form.location }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_description" class="form-label">Description</label>
+                                {{ form.description }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Contact Information Section - Moved to Basic Information tab -->
+                    <div class="file-upload-section" id="contact-info-section">
+                        <h4>Additional Contact Information</h4>
+                        <p class="text-muted">Add contact details specific to this project</p>
+                        
+                        <!-- Client Emails -->
+                        <h5 class="mt-3">Client Email Addresses</h5>
+                        <div id="client-emails-container">
+                            <div class="client-email-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <input type="email" name="client_email[]" class="form-control bg-medium text-light" placeholder="Email Address">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="client_email_primary[]" class="form-check-input" value="0">
+                                            <label class="form-check-label">Primary</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-client-email-btn" class="btn btn-sm btn-secondary mb-3">
+                            <i class="fas fa-plus"></i> Add Another Email
+                        </button>
+                        
+                        <!-- Billing Emails -->
+                        <h5 class="mt-3">Billing Email Addresses</h5>
+                        <div id="billing-emails-container">
+                            <div class="billing-email-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <input type="email" name="billing_email[]" class="form-control bg-medium text-light" placeholder="Billing Email Address">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="billing_email_primary[]" class="form-check-input" value="0">
+                                            <label class="form-check-label">Primary</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-billing-email-btn" class="btn btn-sm btn-secondary mb-3">
+                            <i class="fas fa-plus"></i> Add Another Billing Email
+                        </button>
+                        
+                        <!-- Phone Numbers -->
+                        <h5 class="mt-3">Phone Numbers</h5>
+                        <div id="phone-numbers-container">
+                            <div class="phone-number-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <input type="text" name="phone_number[]" class="form-control bg-medium text-light" placeholder="Phone Number">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="phone_description[]" class="form-control bg-medium text-light" placeholder="Description (e.g., Office, Mobile)">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-check">
+                                            <input type="checkbox" name="phone_primary[]" class="form-check-input" value="0">
+                                            <label class="form-check-label">Primary</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-phone-btn" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-plus"></i> Add Another Phone
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Property Information Tab -->
+                <div class="tab-pane fade" id="property-info" role="tabpanel">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_legal_name_for_survey" class="form-label">Legal Name for Survey Documents</label>
+                                {{ form.legal_name_for_survey }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_property_address" class="form-label">Property Address</label>
+                                {{ form.property_address }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_property_tax_parcel" class="form-label">Property Tax Parcel Number</label>
+                                {{ form.property_tax_parcel }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_flood_map_number" class="form-label">Flood Map Number</label>
+                                {{ form.flood_map_number }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_base_flood_elevation" class="form-label">Base Flood Elevation</label>
+                                {{ form.base_flood_elevation }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Property Maps Upload Section - Only shown in Property Info tab -->
+                    <div class="file-upload-section" id="property-maps-section">
+                        <h4>Property Maps</h4>
+                        <p class="text-muted">Upload maps, plats, or other property documentation</p>
+                        
+                        <div id="property-maps-container">
+                            <div class="property-map-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="text" name="map_name[]" class="form-control bg-medium text-light" placeholder="Map Name">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="map_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="custom-file">
+                                            <input type="file" name="map_file[]" class="form-control bg-medium text-light" accept=".pdf,.png,.jpg,.jpeg">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-map-btn" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-plus"></i> Add Another Map
+                        </button>
+                    </div>
+                    
+                    <!-- Property Deeds Section - Only shown in Property Info tab -->
+                    <div class="file-upload-section" id="property-deeds-section">
+                        <h4>Property Deeds</h4>
+                        <p class="text-muted">Add property deed references</p>
+                        
+                        <div id="property-deeds-container">
+                            <div class="property-deed-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="text" name="deed_book[]" class="form-control bg-medium text-light" placeholder="Book">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="deed_page[]" class="form-control bg-medium text-light" placeholder="Page">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="deed_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-deed-btn" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-plus"></i> Add Another Deed
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Contract & Financial Tab -->
+                <div class="tab-pane fade" id="contract-info" role="tabpanel">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ form.has_legal_contract }}
+                                    <label for="id_has_legal_contract" class="form-check-label">Has Legal Contract</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_contract_document" class="form-label">Contract Document</label>
+                                {{ form.contract_document }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_quoted_price" class="form-label">Quoted Price</label>
+                                {{ form.quoted_price }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_quoted_time_frame" class="form-label">Quoted Time Frame</label>
+                                {{ form.quoted_time_frame }}
+                                <small class="text-muted">e.g., '2 weeks', '1 month'</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Team & Notes Tab -->
+                <div class="tab-pane fade" id="team-info" role="tabpanel">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_assigned_to" class="form-label">Assigned Team Members</label>
+                                {{ form.assigned_to }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_notes" class="form-label">Project Notes</label>
+                                {{ form.notes }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 d-flex justify-content-end">
+                <a href="{% url 'project-list' %}" class="btn btn-secondary me-2">Cancel</a>
+                <button type="submit" class="btn btn-primary submit-button">Save Project</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card bg-dark mt-3">
+    <div class="card-header">
+        <h6 class="mb-0">Manual Geocoding</h6>
+    </div>
+    <div class="card-body">
+        <p class="text-muted small">If automatic geocoding fails, you can manually enter coordinates.</p>
+        <div class="row">
+            <!-- Check if the fields exist before trying to render them -->
+            {% if form.latitude %}
+                <div class="col-md-6">
+                    {{ form.latitude|as_crispy_field }}
+                </div>
+            {% else %}
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_latitude">Latitude</label>
+                        <input type="number" name="latitude" step="0.0000001" class="form-control" id="id_latitude" placeholder="e.g., 33.9308">
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if form.longitude %}
+                <div class="col-md-6">
+                    {{ form.longitude|as_crispy_field }}
+                </div>
+            {% else %}
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="id_longitude">Longitude</label>
+                        <input type="number" name="longitude" step="0.0000001" class="form-control" id="id_longitude" placeholder="e.g., -78.3903">
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="mt-2">
+            <a href="https://www.latlong.net/" target="_blank" class="btn btn-sm btn-info">
+                <i class="fas fa-map-marker-alt me-1"></i> Find Coordinates
+            </a>
+            <span class="text-muted ms-2 small">Use this tool to find coordinates for an address</span>
+        </div>
+    </div>
+</div>
+
+{% if form.instance.pk %}
+<!-- Additional forms for related objects, shown only for existing projects -->
+<div class="mt-4">
+    <ul class="nav nav-tabs" id="related-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="emails-tab" data-bs-toggle="tab" data-bs-target="#emails" type="button" role="tab">
+                Client Emails
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab">
+                Billing Emails
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="phones-tab" data-bs-toggle="tab" data-bs-target="#phones" type="button" role="tab">
+                Phone Numbers
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="deeds-tab" data-bs-toggle="tab" data-bs-target="#deeds" type="button" role="tab">
+                Property Deeds
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="maps-tab" data-bs-toggle="tab" data-bs-target="#maps" type="button" role="tab">
+                Property Maps
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="attachments-tab" data-bs-toggle="tab" data-bs-target="#attachments" type="button" role="tab">
+                Attachments
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
+                Comments
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content card bg-dark text-light p-3 mt-0">
+        <div class="tab-pane fade show active" id="emails" role="tabpanel">
+            <h4>Client Email Addresses</h4>
+            <p class="text-muted">Add additional client email addresses for this project</p>
+            
+            <form method="post" action="{% url 'project-add-email' pk=form.instance.pk %}">
+                {% csrf_token %}
+                <!-- Email formset will be rendered here -->
+                <div class="table-responsive">
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>Email Address</th>
+                                <th>Primary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for email in form.instance.client_emails.all %}
+                            <tr>
+                                <td>{{ email.email }}</td>
+                                <td>{% if email.is_primary %}<span class="badge bg-success">Primary</span>{% endif %}</td>
+                                <td>
+                                    <a href="{% url 'project-delete-email' pk=form.instance.pk email_id=email.id %}" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3">No additional email addresses added yet.</td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td>
+                                    <input type="email" name="email" class="form-control bg-medium text-light" required>
+                                </td>
+                                <td>
+                                    <input type="checkbox" name="is_primary" class="form-check-input">
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-sm btn-primary">Add Email</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        
+        <div class="tab-pane fade" id="billing" role="tabpanel">
+            <h4>Billing Email Addresses</h4>
+            <p class="text-muted">Add additional billing email addresses for this project</p>
+            
+            <form method="post" action="{% url 'project-add-billing-email' pk=form.instance.pk %}">
+                {% csrf_token %}
+                <!-- Billing Email formset will be rendered here -->
+                <div class="table-responsive">
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>Billing Email Address</th>
+                                <th>Primary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for email in form.instance.billing_emails.all %}
+                            <tr>
+                                <td>{{ email.email }}</td>
+                                <td>{% if email.is_primary %}<span class="badge bg-success">Primary</span>{% endif %}</td>
+                                <td>
+                                    <a href="{% url 'project-delete-billing-email' pk=form.instance.pk email_id=email.id %}" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3">No additional billing email addresses added yet.</td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td>
+                                    <input type="email" name="email" class="form-control bg-medium text-light" required>
+                                </td>
+                                <td>
+                                    <input type="checkbox" name="is_primary" class="form-check-input">
+                                </td>
+                                <td>
+                                    <button type="submit" class="btn btn-sm btn-primary">Add Email</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Other tabs similar to above -->
+        <div class="tab-pane fade" id="phones" role="tabpanel"><!-- Phone tab content --></div>
+        <div class="tab-pane fade" id="deeds" role="tabpanel"><!-- Deeds tab content --></div>
+        <div class="tab-pane fade" id="maps" role="tabpanel"><!-- Maps tab content --></div>
+        <div class="tab-pane fade" id="attachments" role="tabpanel"><!-- Attachments tab content --></div>
+        <div class="tab-pane fade" id="comments" role="tabpanel"><!-- Comments tab content --></div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for dropdowns
+        // Initialize Select2 for dropdowns
+        $('#id_client').select2({
+            theme: 'default',
+            placeholder: 'Select a client',
+            dropdownParent: $('#basic-info'),
+            width: '100%'
+        });
+
+        $('#id_assigned_to').select2({
+            theme: 'default',
+            placeholder: 'Select team members',
+            dropdownParent: $('#team-info'),
+            width: '100%'
+        });
+        
+        // Add another map button
+        $('#add-map-btn').click(function() {
+            const mapRow = `
+                <div class="property-map-row mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" name="map_name[]" class="form-control bg-medium text-light" placeholder="Map Name">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="map_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="custom-file">
+                                <input type="file" name="map_file[]" class="form-control bg-medium text-light" accept=".pdf,.png,.jpg,.jpeg">
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#property-maps-container').append(mapRow);
+        });
+        
+        // Add another deed button
+        $('#add-deed-btn').click(function() {
+            const deedRow = `
+                <div class="property-deed-row mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" name="deed_book[]" class="form-control bg-medium text-light" placeholder="Book">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="deed_page[]" class="form-control bg-medium text-light" placeholder="Page">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" name="deed_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#property-deeds-container').append(deedRow);
+        });
+        
+        // Add another client email button
+        $('#add-client-email-btn').click(function() {
+            const emailRow = `
+                <div class="client-email-row mb-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="email" name="client_email[]" class="form-control bg-medium text-light" placeholder="Email Address">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="client_email_primary[]" class="form-check-input" value="${$('#client-emails-container .client-email-row').length}">
+                                <label class="form-check-label">Primary</label>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#client-emails-container').append(emailRow);
+        });
+        
+        // Add another billing email button
+        $('#add-billing-email-btn').click(function() {
+            const emailRow = `
+                <div class="billing-email-row mb-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="email" name="billing_email[]" class="form-control bg-medium text-light" placeholder="Billing Email Address">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="billing_email_primary[]" class="form-check-input" value="${$('#billing-emails-container .billing-email-row').length}">
+                                <label class="form-check-label">Primary</label>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#billing-emails-container').append(emailRow);
+        });
+        
+        // Add another phone button
+        $('#add-phone-btn').click(function() {
+            const phoneRow = `
+                <div class="phone-number-row mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" name="phone_number[]" class="form-control bg-medium text-light" placeholder="Phone Number">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="phone_description[]" class="form-control bg-medium text-light" placeholder="Description (e.g., Office, Mobile)">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="phone_primary[]" class="form-check-input" value="${$('#phone-numbers-container .phone-number-row').length}">
+                                <label class="form-check-label">Primary</label>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#phone-numbers-container').append(phoneRow);
+        });
+        
+        // Remove row button handler (delegated event for dynamically added elements)
+        $(document).on('click', '.remove-row', function() {
+            $(this).closest('.row').parent().remove();
+        });
+        
+        // Form submission handler
+        $('#project-form').on('submit', function(e) {
+            // Update primary checkbox values based on their positions
+            $('#client-emails-container .client-email-row').each(function(index) {
+                $(this).find('input[name="client_email_primary[]"]').val(index);
+            });
+            
+            $('#billing-emails-container .billing-email-row').each(function(index) {
+                $(this).find('input[name="billing_email_primary[]"]').val(index);
+            });
+            
+            $('#phone-numbers-container .phone-number-row').each(function(index) {
+                $(this).find('input[name="phone_primary[]"]').val(index);
+            });
+
+            // Ensure the form remains visible during submission for debugging
+            console.log('Form submission triggered');
+        });
+    });
+</script>
+{% endblock %}

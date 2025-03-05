@@ -1,0 +1,22 @@
+<!-- templates/field_resources/gate_code_form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit Gate Code: {{ form.instance.community_name }}{% else %}Add New Gate Code{% endif %} - CGAS
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{% if form.instance.pk %}Edit Gate Code: {{ form.instance.community_name }}{% else %}Add New Gate Code{% endif %}</h1>
+    <a href="{% url 'gate-code-list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to List
+    </a>
+</div>
+
+<div class="card bg-dark text-light">
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+</div>
+{% endblock %}

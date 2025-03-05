@@ -1,0 +1,28 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Virtual Environment
+venv/
+ENV/
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Project specific
+ngrok.exe
+*.sqlite3
+
+# Media and static files that should be collected, not versioned
+/media/uploads/
+
+# Environment variables
+.env

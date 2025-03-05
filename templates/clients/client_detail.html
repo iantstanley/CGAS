@@ -1,0 +1,183 @@
+<!-- templates/clients/client_detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ client.name }} - CGAS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Client: {{ client.name }}</h1>
+    <div>
+        <a href="{% url 'client-list' %}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+        <a href="{% url 'client-update' pk=client.id %}" class="btn btn-warning me-2">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{% url 'client-delete' pk=client.id %}" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete
+        </a>
+    </div>
+</div>
+
+<div class="card bg-dark text-light">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h5 class="card-title">Client Information</h5>
+                <table class="table table-dark">
+                    {% if client.company_name %}
+                    <tr>
+                        <th style="width: 150px;">Company:</th>
+                        <td>{{ client.company_name }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th style="width: 150px;">Name:</th>
+                        <td>{{ client.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Contact Person:</th>
+                        <td>{{ client.contact_person|default:"Not specified" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Email:</th>
+                        <td>
+                            {% if client.email %}
+                                <a href="mailto:{{ client.email }}">{{ client.email }}</a>
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Billing Email:</th>
+                        <td>
+                            {% if client.billing_email %}
+                                <a href="mailto:{{ client.billing_email }}">{{ client.billing_email }}</a>
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Phone:</th>
+                        <td>
+                            {% if client.phone %}
+                                <a href="tel:{{ client.phone }}">{{ client.phone }}</a>
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if client.active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h5 class="card-title">Address</h5>
+                <p>
+                    {% if client.address or client.city or client.state or client.zip_code %}
+                        {{ client.address }}<br>
+                        {% if client.city or client.state or client.zip_code %}
+                            {{ client.city }}{% if client.city and client.state %}, {% endif %}
+                            {{ client.state }} {{ client.zip_code }}
+                        {% endif %}
+                    {% else %}
+                        <em>No address information provided</em>
+                    {% endif %}
+                </p>
+                
+                <h5 class="card-title mt-4">Notes</h5>
+                <p>{{ client.notes|default:"No notes"|linebreaks }}</p>
+                
+                <h5 class="card-title mt-4">System Information</h5>
+                <table class="table table-dark">
+                    <tr>
+                        <th style="width: 150px;">Created:</th>
+                        <td>{{ client.created_at|date:"F j, Y, g:i a" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Last Updated:</th>
+                        <td>{{ client.updated_at|date:"F j, Y, g:i a" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Related Projects Section -->
+        <div class="mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title">Related Projects</h5>
+                <a href="{% url 'project-create' %}?client={{ client.id }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Add Project
+                </a>
+            </div>
+            
+            {% if projects %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Project #</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in projects %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'project-detail' pk=project.id %}" class="text-info">
+                                            {{ project.project_number }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'project-detail' pk=project.id %}" class="text-info">
+                                            {{ project.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if project.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif project.status == 'in_progress' %}
+                                            <span class="badge bg-primary">In Progress</span>
+                                        {% elif project.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif project.status == 'on_hold' %}
+                                            <span class="badge bg-secondary">On Hold</span>
+                                        {% elif project.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{% url 'project-detail' pk=project.id %}" class="btn btn-sm btn-info me-1">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'project-update' pk=project.id %}" class="btn btn-sm btn-warning me-1">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'project-delete' pk=project.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No projects associated with this client yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

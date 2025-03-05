@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Field Crews - CGAS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">Field Crews</h1>
+    <a href="{% url 'field-crew-create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Add Field Crew
+    </a>
+</div>
+
+<!-- Search Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        {% if search_form %}
+            {% load crispy_forms_tags %}
+            {% crispy search_form %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    {% if field_crews %}
+        {% for crew in field_crews %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{{ crew.crew_id }}</h5>
+                        <div>
+                            {% if crew.needs_vehicle_maintenance %}
+                                <span class="badge bg-warning me-1" title="Maintenance needed">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Crew Members -->
+                        <div class="mb-3">
+                            <h6 class="text-primary">Crew Members</h6>
+                            {% if crew.members.all %}
+                                <ul class="list-unstyled mb-0">
+                                    {% for member in crew.members.all %}
+                                        <li><i class="fas fa-user me-2"></i>{{ member.name }}{% if member.position %} <span class="text-muted">({{ member.position }})</span>{% endif %}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="text-muted small mb-0">No crew members assigned</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Vehicle Information -->
+                        <div class="mb-3">
+                            <h6 class="text-primary">Vehicle</h6>
+                            {% if crew.vehicle %}
+                                <p class="mb-0">{{ crew.vehicle.year }} {{ crew.vehicle.make }} {{ crew.vehicle.model }}
+                                {% if crew.vehicle.needs_oil_change %}
+                                    <span class="badge bg-warning" title="Oil change needed">Oil</span>
+                                {% endif %}
+                                {% if crew.vehicle.needs_tag_renewal %}
+                                    <span class="badge bg-warning" title="Tag renewal needed">Tag</span>
+                                {% endif %}
+                                </p>
+                            {% else %}
+                                <p class="text-muted small mb-0">No vehicle assigned</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Contact Information -->
+                        {% if crew.contact_phone or crew.contact_email %}
+                            <div class="mb-3">
+                                <h6 class="text-primary">Contact</h6>
+                                {% if crew.contact_phone %}
+                                    <p class="small mb-0"><i class="fas fa-phone me-2"></i>{{ crew.contact_phone }}</p>
+                                {% endif %}
+                                {% if crew.contact_email %}
+                                    <p class="small mb-0"><i class="fas fa-envelope me-2"></i>{{ crew.contact_email }}</p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'field-crew-detail' crew.pk %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                            <div>
+                                <a href="{% url 'field-crew-update' crew.pk %}" class="btn btn-sm btn-warning me-1">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </a>
+                                <a href="{% url 'field-crew-delete' crew.pk %}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <p class="text-muted mb-4">No field crews found. Create your first field crew to get started.</p>
+                    <a href="{% url 'field-crew-create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Field Crew
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="mt-4">
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+{% endblock %}

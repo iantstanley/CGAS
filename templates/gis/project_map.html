@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    <style>
+        #project-map {
+            height: 70vh;
+            width: 100%;
+            z-index: 0;
+        }
+        .leaflet-popup-content {
+            min-width: 200px;
+        }
+        .status-filter-item {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all var(--transition-fast);
+        }
+        .status-filter-item:hover {
+            background-color: var(--bg-medium);
+        }
+        .status-filter-item.disabled {
+            opacity: 0.5;
+        }
+        .status-filter-item input {
+            cursor: pointer;
+        }
+        .map-controls {
+            background-color: var(--bg-dark);
+            padding: 15px;
+            border-radius: var(--radius-md);
+            margin-bottom: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the map
+            var map = L.map('project-map').setView([34.0376, -78.2278], 10);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Create markers layer group to manage markers
+            var allMarkers = L.layerGroup().addTo(map);
+            var markersMap = {}; // To keep track of markers by status
+            
+            // Initialize status filter collection
+            var statusTypes = ['admin', 'field_ready', 'mapping', 'pls_review', 'on_hold', 
+                              'construction_ongoing', 'completed', 'cancelled'];
+                              
+            statusTypes.forEach(function(status) {
+                markersMap[status] = [];
+            });
+            
+            // Function to get appropriate icon based on project status
+            function getMarkerIcon(status) {
+                let color = '#3788d8';  // Default blue for admin
+                
+                switch(status) {
+                    case 'admin':
+                        color = '#3788d8';  // Blue
+                        break;
+                    case 'field_ready':
+                        color = '#9b59b6';  // Purple
+                        break;
+                    case 'mapping':
+                        color = '#9b59b6';  // Purple
+                        break;
+                    case 'pls_review':
+                        color = '#f39c12';  // Orange
+                        break;
+                    case 'on_hold':
+                        color = '#e74c3c';  // Red
+                        break;
+                    case 'construction_ongoing':
+                        color = '#f1c40f';  // Yellow
+                        break;
+                    case 'completed':
+                        color = '#2ecc71';  // Green
+                        break;
+                    case 'cancelled':
+                        color = '#7f8c8d';  // Gray
+                        break;
+                    default:
+                        color = '#3788d8';  // Default blue
+                }
+                
+                return L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                });
+            }
+            
+            // Update status summary
+            function updateStatusSummary(total) {
+                let summary = document.getElementById('geocode-status');
+                if (summary) {
+                    if (total === 0) {
+                        summary.innerHTML = 'No geocoded projects found.';
+                        summary.className = 'text-warning';
+                    } else if (total === 1) {
+                        summary.innerHTML = '1 project geocoded and displayed on map.';
+                        summary.className = 'text-info';
+                    } else {
+                        summary.innerHTML = `${total} projects geocoded and displayed on map.`;
+                        summary.className = 'text-info';
+                    }
+                }
+            }
+            
+            // Fetch project data - Add timestamp to prevent caching
+            fetch('{% url "project-data-json" %}?t=' + new Date().getTime())
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Found " + data.length + " projects with coordinates");
+                    updateStatusSummary(data.length);
+                    
+                    // Process each project
+                    data.forEach(function(project) {
+                        console.log("Adding project to map: " + project.project_number + " (" + project.latitude + ", " + project.longitude + ")");
+                        
+                        // Create marker with custom icon
+                        var marker = L.marker([project.latitude, project.longitude], {
+                            icon: getMarkerIcon(project.status)
+                        });
+                        
+                        // Create popup content
+                        var popupContent = `
+                            <strong>${project.project_number}</strong><br>
+                            <strong>Title:</strong> ${project.title}<br>
+                            <strong>Client:</strong> ${project.client_name}<br>
+                            <strong>Address:</strong> ${project.address}<br>
+                            <strong>Status:</strong> ${project.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}<br>
+                            <a href="${project.url}" class="btn btn-sm btn-primary mt-2">View Project</a>
+                        `;
+                        
+                        // Bind popup to marker
+                        marker.bindPopup(popupContent);
+                        
+                        // Add to appropriate status group
+                        if (!markersMap[project.status]) {
+                            markersMap[project.status] = [];
+                        }
+                        markersMap[project.status].push(marker);
+                        
+                        // Add to map
+                        marker.addTo(allMarkers);
+                    });
+                    
+                    // Update the status count badges
+                    updateStatusCounts();
+                    
+                    // If we have projects, fit bounds to show all projects
+                    if (data.length > 0) {
+                        var bounds = [];
+                        data.forEach(function(project) {
+                            bounds.push([project.latitude, project.longitude]);
+                        });
+                        
+                        if (bounds.length === 1) {
+                            // If only one point, set the view to that point with a closer zoom
+                            map.setView(bounds[0], 14);
+                        } else {
+                            map.fitBounds(bounds);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching project data:', error);
+                    updateStatusSummary(0);
+                });
+                
+            // Function to update the filter status counts
+            function updateStatusCounts() {
+                document.querySelectorAll('.status-count').forEach(element => {
+                    const status = element.getAttribute('data-status');
+                    if (markersMap[status]) {
+                        element.textContent = markersMap[status].length;
+                    } else {
+                        element.textContent = '0';
+                    }
+                });
+            }
+            
+            // Handle status filter changes
+            document.querySelectorAll('.status-filter').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const status = this.value;
+                    const checked = this.checked;
+                    
+                    if (markersMap[status]) {
+                        markersMap[status].forEach(marker => {
+                            if (checked) {
+                                if (!allMarkers.hasLayer(marker)) {
+                                    allMarkers.addLayer(marker);
+                                }
+                            } else {
+                                if (allMarkers.hasLayer(marker)) {
+                                    allMarkers.removeLayer(marker);
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Update the filter item appearance
+                    const filterItem = this.closest('.status-filter-item');
+                    if (filterItem) {
+                        if (checked) {
+                            filterItem.classList.remove('disabled');
+                        } else {
+                            filterItem.classList.add('disabled');
+                        }
+                    }
+                });
+            });
+            
+            // Force geocode button
+            document.getElementById('force-geocode-all')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('This will attempt to geocode all projects. Continue?')) {
+                    window.location.href = "{% url 'force-geocode-projects' %}";
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card bg-dark">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Project GIS Map</h5>
+            <div>
+                <a href="{% url 'project-list' %}" class="btn btn-secondary">
+                    <i class="fas fa-list me-1"></i> Project List
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <div class="map-controls d-flex justify-content-between align-items-center">
+                        <span id="geocode-status" class="text-info">Loading project data...</span>
+                        
+                        {% if user.is_staff %}
+                        <div>
+                            <a href="#" id="force-geocode-all" class="btn btn-sm btn-warning">
+                                <i class="fas fa-map-marker-alt me-1"></i> Force Geocode All Projects
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card bg-dark border-light">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <h6 class="mb-0">Map Legend & Filters</h6>
+                                <small class="text-muted">Click to toggle visibility</small>
+                            </div>
+                            <div class="d-flex flex-wrap">
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="admin" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #3788d8; border: 2px solid white;"></span>
+                                        <small class="ms-1">Admin (<span class="status-count" data-status="admin">0</span>)</small>
+                                    </label>
+                                </div>
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="field_ready" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #9b59b6; border: 2px solid white;"></span>
+                                        <small class="ms-1">Field Ready (<span class="status-count" data-status="field_ready">0</span>)</small>
+                                    </label>
+                                </div>
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="mapping" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #9b59b6; border: 2px solid white;"></span>
+                                        <small class="ms-1">Mapping (<span class="status-count" data-status="mapping">0</span>)</small>
+                                    </label>
+                                </div>
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="pls_review" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #f39c12; border: 2px solid white;"></span>
+                                        <small class="ms-1">PLS Review (<span class="status-count" data-status="pls_review">0</span>)</small>
+                                    </label>
+                                </div>
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="on_hold" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #e74c3c; border: 2px solid white;"></span>
+                                        <small class="ms-1">On Hold (<span class="status-count" data-status="on_hold">0</span>)</small>
+                                    </label>
+                                </div>
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="construction_ongoing" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #f1c40f; border: 2px solid white;"></span>
+                                        <small class="ms-1">Construction (<span class="status-count" data-status="construction_ongoing">0</span>)</small>
+                                    </label>
+                                </div>
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="completed" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #2ecc71; border: 2px solid white;"></span>
+                                        <small class="ms-1">Completed (<span class="status-count" data-status="completed">0</span>)</small>
+                                    </label>
+                                </div>
+                                <div class="me-3 mb-2 status-filter-item">
+                                    <label class="d-flex align-items-center">
+                                        <input type="checkbox" class="status-filter me-2" value="cancelled" checked>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: #7f8c8d; border: 2px solid white;"></span>
+                                        <small class="ms-1">Cancelled (<span class="status-count" data-status="cancelled">0</span>)</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="project-map"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

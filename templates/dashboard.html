@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - CGAS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">Dashboard</h1>
+</div>
+
+<!-- First Row: Projects, Clients, Field Crews -->
+<div class="row">
+    <!-- Active Projects Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-project-diagram me-2"></i>Active Projects
+                </h5>
+                <p class="card-text fs-4 mb-4">You have {{ active_projects_count|default:"0" }} active projects.</p>
+                <a href="{% url 'project-list' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-1"></i> View Projects
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clients Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-users me-2"></i>Clients
+                </h5>
+                <p class="card-text fs-4 mb-4">There are {{ clients_count|default:"0" }} clients in the system.</p>
+                <a href="{% url 'client-list' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-1"></i> View Clients
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Field Crews Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-users-cog me-2"></i>Field Crews
+                </h5>
+                <p class="card-text fs-4 mb-4">There are {{ field_crews_count|default:"0" }} field crews.</p>
+                <a href="{% url 'field-crew-list' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-1"></i> View Field Crews
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row: Ordinance Library, Equipment Maintenance, Gate Codes -->
+<div class="row">
+    <!-- Ordinance Library Card (new) -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-book me-2"></i>Ordinance Library
+                </h5>
+                <p class="card-text fs-4 mb-4">There are {{ ordinances_count|default:"0" }} ordinances available.</p>
+                <a href="{% url 'ordinance-list' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-1"></i> View Ordinances
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Equipment Maintenance Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>Equipment Maintenance
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if field_crews_with_alerts %}
+                    <ul class="list-unstyled mb-3">
+                        {% for crew in field_crews_with_alerts %}
+                            <li class="mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-warning me-2">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                    <div>
+                                        <div><strong>{{ crew.crew_id }}</strong></div>
+                                        <div class="text-muted small">
+                                            {% if crew.vehicle.needs_oil_change %}Oil change needed{% endif %}
+                                            {% if crew.vehicle.needs_oil_change and crew.vehicle.needs_tag_renewal %} | {% endif %}
+                                            {% if crew.vehicle.needs_tag_renewal %}Tag renewal needed{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted mb-4">No equipment maintenance needed.</p>
+                {% endif %}
+                <a href="{% url 'field-crew-list' %}" class="btn btn-primary">
+                    <i class="fas fa-users-cog me-1"></i> Manage Field Crews
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Gate Codes Card -->
+    <div class="col-md-4 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-key me-2"></i>Gate Codes
+                </h5>
+                <p class="card-text fs-4 mb-4">There are {{ gate_codes_count|default:"0" }} gate codes available.</p>
+                <a href="{% url 'gate-code-list' %}" class="btn btn-primary">
+                    <i class="fas fa-list me-1"></i> View Gate Codes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Third Row: Recent Activity -->
+<div class="row">
+    <!-- Recent Activity Card -->
+    <div class="col-md-12 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">No recent activity.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

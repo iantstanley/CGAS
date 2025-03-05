@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ ordinance.name }} - Ordinance Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h3 mb-0 text-light">{{ ordinance.name }}</h1>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'ordinance-redirect' ordinance.id %}" class="btn btn-info me-2" target="_blank">
+                <i class="fas fa-external-link-alt me-1"></i>View Ordinance
+            </a>
+            <a href="{% url 'ordinance-update' ordinance.id %}" class="btn btn-warning me-2">
+                <i class="fas fa-edit me-1"></i>Edit
+            </a>
+            <a href="{% url 'ordinance-delete' ordinance.id %}" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i>Delete
+            </a>
+            <a href="{% url 'ordinance-list' %}" class="btn btn-secondary ms-2">
+                <i class="fas fa-arrow-left me-1"></i>Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="card bg-dark">
+        <div class="card-header bg-medium">
+            <h5 class="mb-0 text-light">Ordinance Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold text-muted">Name:</div>
+                <div class="col-md-9">{{ ordinance.name }}</div>
+            </div>
+            
+            {% if ordinance.description %}
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold text-muted">Description:</div>
+                <div class="col-md-9">{{ ordinance.description|linebreaks }}</div>
+            </div>
+            {% endif %}
+            
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold text-muted">Type:</div>
+                <div class="col-md-9">
+                    {% if ordinance.is_url %}
+                    <span class="badge bg-info">Web Link</span>
+                    {% else %}
+                    <span class="badge bg-warning">PDF Document</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if ordinance.is_url and ordinance.url %}
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold text-muted">URL:</div>
+                <div class="col-md-9">
+                    <a href="{{ ordinance.url }}" target="_blank">{{ ordinance.url }}</a>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if ordinance.document %}
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold text-muted">Document:</div>
+                <div class="col-md-9">
+                    <a href="{{ ordinance.document.url }}" target="_blank">{{ ordinance.get_document_name }}</a>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="row mb-3">
+                <div class="col-md-3 fw-bold text-muted">Date Added:</div>
+                <div class="col-md-9">{{ ordinance.date_added|date:"F d, Y H:i" }}</div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 fw-bold text-muted">Last Updated:</div>
+                <div class="col-md-9">{{ ordinance.last_updated|date:"F d, Y H:i" }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

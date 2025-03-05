@@ -1,0 +1,56 @@
+:root {
+    /* Primary Colors - Teal accent from logo */
+    --primary: #0A8599;         /* Main action color - teal from logo */
+    --primary-light: #35A7B8;   /* Lighter variation */
+    --primary-dark: #096F85;    /* Darker variation */
+
+    /* Secondary Colors */
+    --secondary: #0A7285;       /* Secondary actions */
+    --secondary-light: #1A8296;
+    --secondary-dark: #045E70;
+
+    /* Background Colors - Focused on dark blue from header */
+    --bg-darkest: #171A21;      /* Darkest background - Steam dark blue (kept as is) */
+    --bg-darker: #1B2838;       /* Page background - Steam main blue */
+    --bg-dark: #202D3D;         /* Card background - closer to the darkest blue */
+    --bg-medium: #253545;       /* Form fields, headers - subtle lighter shade */
+    --bg-light: #2A3A4D;        /* Hover states - subtle lighter shade */
+
+    /* Text Colors - Adjusted for better contrast with dark blue */
+    --text-light: #F5F6FA;      /* Main text */
+    --text-muted: #A5B9CC;      /* Secondary text - bluer tint */
+    --text-dim: #738297;        /* Disabled text - bluer tint */
+
+    /* Status Colors */
+    --success: #1BC5BD;         /* Success messages/status */
+    --warning: #FFA800;         /* Warning messages/status */
+    --danger: #D5202B;          /* Error messages/status - red from logo */
+    --info: #3582B3;            /* Info messages/status */
+    
+    /* Border colors - Closer to the dark blue theme */
+    --border-dark: #15191F;     /* Darker than background for subtle borders */
+    --border-medium: #1D2B3C;   /* Medium border - subtle */
+    --border-light: #253347;    /* Light border - subtle */
+    
+    /* Shadows - Kept the same */
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+    
+    /* Spacing - Kept the same */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    
+    /* Border radius - Kept the same */
+    --radius-sm: 0.2rem;
+    --radius-md: 0.35rem;
+    --radius-lg: 0.5rem;
+    
+    /* Transitions - Kept the same */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.35s ease;
+}

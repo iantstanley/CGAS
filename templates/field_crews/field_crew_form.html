@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}Edit{% else %}Add{% endif %} Field Crew - CGAS
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">{% if form.instance.pk %}Edit{% else %}Add New{% endif %} Field Crew</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize any necessary JavaScript here
+    document.addEventListener('DOMContentLoaded', function() {
+        // Example: You can add tab navigation logic if needed
+    });
+</script>
+{% endblock %}

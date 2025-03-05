@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.title }} - Calendar Event - Coastal Geomatics Admin Suite{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="fas fa-calendar-alt me-2"></i> Calendar Event</h2>
+    <div>
+        <a href="{% url 'calendar-event-update' event.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit me-1"></i> Edit
+        </a>
+        <a href="{% url 'calendar-event-delete' event.pk %}" class="btn btn-danger">
+            <i class="fas fa-trash-alt me-1"></i> Delete
+        </a>
+        <a href="{% url 'calendar' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Calendar
+        </a>
+    </div>
+</div>
+
+<div class="card bg-dark mb-4">
+    <div class="card-header bg-medium">
+        <h4 class="mb-0">{{ event.title }}</h4>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Date:</div>
+            <div class="col-md-9">
+                {% if event.all_day %}
+                    {{ event.start_time|date:"F j, Y" }}
+                    {% if event.start_time|date:"Y-m-d" != event.end_time|date:"Y-m-d" %}
+                        to {{ event.end_time|date:"F j, Y" }}
+                    {% endif %}
+                    (All Day)
+                {% else %}
+                    {{ event.start_time|date:"F j, Y" }}
+                    {% if event.start_time|date:"Y-m-d" != event.end_time|date:"Y-m-d" %}
+                        to {{ event.end_time|date:"F j, Y" }}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if not event.all_day %}
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Time:</div>
+            <div class="col-md-9">
+                {{ event.start_time|date:"g:i A" }} to {{ event.end_time|date:"g:i A" }}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if event.project %}
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Project:</div>
+            <div class="col-md-9">
+                <a href="{% url 'project-detail' event.project.pk %}">
+                    {{ event.project.project_number }} - {{ event.project.title }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if event.field_crew %}
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Field Crew:</div>
+            <div class="col-md-9">
+                <a href="{% url 'field-crew-detail' event.field_crew.pk %}">
+                    {{ event.field_crew.crew_id }}
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if event.location %}
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Location:</div>
+            <div class="col-md-9">{{ event.location }}</div>
+        </div>
+        {% endif %}
+        
+        {% if event.notes %}
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Notes:</div>
+            <div class="col-md-9">{{ event.notes|linebreaks }}</div>
+        </div>
+        {% endif %}
+        
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Created By:</div>
+            <div class="col-md-9">{{ event.created_by.email }}</div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-3 fw-bold">Last Updated:</div>
+            <div class="col-md-9">{{ event.updated_at|date:"F j, Y g:i A" }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
