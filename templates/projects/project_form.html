@@ -133,28 +133,33 @@
             {% csrf_token %}
             
             <!-- Tab Navigation -->
-            <ul class="nav nav-tabs mb-3" id="projectTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-info" type="button" role="tab">
-                        Basic Information
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="property-tab" data-bs-toggle="tab" data-bs-target="#property-info" type="button" role="tab">
-                        Property Information
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="contract-tab" data-bs-toggle="tab" data-bs-target="#contract-info" type="button" role="tab">
-                        Contract & Financial
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team-info" type="button" role="tab">
-                        Team & Notes
-                    </button>
-                </li>
-            </ul>
+<ul class="nav nav-tabs mb-3" id="projectTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic-info" type="button" role="tab">
+            Basic Information
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="property-tab" data-bs-toggle="tab" data-bs-target="#property-info" type="button" role="tab">
+            Property Information
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="contract-tab" data-bs-toggle="tab" data-bs-target="#contract-info" type="button" role="tab">
+            Contract & Financial
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents-info" type="button" role="tab">
+            Documents
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team-info" type="button" role="tab">
+            Team
+        </button>
+    </li>
+</ul>
             
             <!-- Tab Content -->
             <div class="tab-content">
@@ -165,7 +170,6 @@
                             <div class="mb-3">
                                 <label for="id_project_number" class="form-label">Project Number</label>
                                 {{ form.project_number }}
-                                <small class="text-muted">Optional. Will be auto-generated if left blank.</small>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -200,22 +204,6 @@
                             <div class="mb-3">
                                 <label for="id_end_date" class="form-label">End Date</label>
                                 {{ form.end_date }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="id_location" class="form-label">Location</label>
-                                {{ form.location }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="id_description" class="form-label">Description</label>
-                                {{ form.description }}
                             </div>
                         </div>
                     </div>
@@ -323,72 +311,24 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="id_flood_map_number" class="form-label">Flood Map Number</label>
                                 {{ form.flood_map_number }}
                             </div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="id_flood_zone" class="form-label">Flood Zone</label>
+                                {{ form.flood_zone }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="id_base_flood_elevation" class="form-label">Base Flood Elevation</label>
                                 {{ form.base_flood_elevation }}
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Property Maps Upload Section - Only shown in Property Info tab -->
-                    <div class="file-upload-section" id="property-maps-section">
-                        <h4>Property Maps</h4>
-                        <p class="text-muted">Upload maps, plats, or other property documentation</p>
-                        
-                        <div id="property-maps-container">
-                            <div class="property-map-row mb-3">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <input type="text" name="map_name[]" class="form-control bg-medium text-light" placeholder="Map Name">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="text" name="map_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="custom-file">
-                                            <input type="file" name="map_file[]" class="form-control bg-medium text-light" accept=".pdf,.png,.jpg,.jpeg">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button type="button" id="add-map-btn" class="btn btn-sm btn-secondary">
-                            <i class="fas fa-plus"></i> Add Another Map
-                        </button>
-                    </div>
-                    
-                    <!-- Property Deeds Section - Only shown in Property Info tab -->
-                    <div class="file-upload-section" id="property-deeds-section">
-                        <h4>Property Deeds</h4>
-                        <p class="text-muted">Add property deed references</p>
-                        
-                        <div id="property-deeds-container">
-                            <div class="property-deed-row mb-3">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <input type="text" name="deed_book[]" class="form-control bg-medium text-light" placeholder="Book">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="text" name="deed_page[]" class="form-control bg-medium text-light" placeholder="Page">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <input type="text" name="deed_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button type="button" id="add-deed-btn" class="btn btn-sm btn-secondary">
-                            <i class="fas fa-plus"></i> Add Another Deed
-                        </button>
                     </div>
                 </div>
                 
@@ -429,7 +369,7 @@
                     </div>
                 </div>
                 
-                <!-- Team & Notes Tab -->
+                <!-- Team Tab (renamed from Team & Notes) -->
                 <div class="tab-pane fade" id="team-info" role="tabpanel">
                     <div class="row">
                         <div class="col-12">
@@ -439,13 +379,95 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="mb-3">
-                                <label for="id_notes" class="form-label">Project Notes</label>
-                                {{ form.notes }}
+                </div>
+                
+                <!-- Documents Tab (New) -->
+                <div class="tab-pane fade" id="documents-info" role="tabpanel">
+                    <h4>Project Documents</h4>
+                    <p class="text-muted">Upload documents, maps, deeds, and other files for this project</p>
+                    
+                    <!-- Property Maps Section -->
+                    <div class="file-upload-section" id="property-maps-section">
+                        <h5>Property Maps</h5>
+                        <p class="text-muted">Upload maps, plats, or other property documentation</p>
+                        
+                        <div id="property-maps-container">
+                            <div class="property-map-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="text" name="map_name[]" class="form-control bg-medium text-light" placeholder="Map Book / Page">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="map_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="custom-file">
+                                            <input type="file" name="map_file[]" class="form-control bg-medium text-light" accept=".pdf,.png,.jpg,.jpeg">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                        
+                        <button type="button" id="add-map-btn" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-plus"></i> Add Another Map
+                        </button>
+                    </div>
+                    
+                    <!-- Property Deeds Section -->
+                    <div class="file-upload-section" id="property-deeds-section">
+                        <h5>Property Deeds</h5>
+                        <p class="text-muted">Add property deed references</p>
+                        
+                        <div id="property-deeds-container">
+                            <div class="property-deed-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <input type="text" name="deed_book[]" class="form-control bg-medium text-light" placeholder="Deed Book / Page">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="deed_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <div class="custom-file">
+                                            <input type="file" name="deed_file[]" class="form-control bg-medium text-light" accept=".pdf,.png,.jpg,.jpeg">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-deed-btn" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-plus"></i> Add Another Deed
+                        </button>
+                    </div>
+                    
+                    <!-- Other Attachments Section -->
+                    <div class="file-upload-section" id="attachments-section">
+                        <h5>Other Attachments</h5>
+                        <p class="text-muted">Upload additional documents related to this project</p>
+                        
+                        <div id="attachments-container">
+                            <div class="attachment-row mb-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="text" name="attachment_name[]" class="form-control bg-medium text-light" placeholder="Document Name">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="text" name="attachment_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="custom-file">
+                                            <input type="file" name="attachment_file[]" class="form-control bg-medium text-light">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="add-attachment-btn" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-plus"></i> Add Another Attachment
+                        </button>
                     </div>
                 </div>
             </div>
@@ -657,7 +679,6 @@
 <script>
     $(document).ready(function() {
         // Initialize Select2 for dropdowns
-        // Initialize Select2 for dropdowns
         $('#id_client').select2({
             theme: 'default',
             placeholder: 'Select a client',
@@ -678,7 +699,7 @@
                 <div class="property-map-row mb-3">
                     <div class="row">
                         <div class="col-md-4">
-                            <input type="text" name="map_name[]" class="form-control bg-medium text-light" placeholder="Map Name">
+                            <input type="text" name="map_name[]" class="form-control bg-medium text-light" placeholder="Map Book / Page">
                         </div>
                         <div class="col-md-4">
                             <input type="text" name="map_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
@@ -704,14 +725,16 @@
             const deedRow = `
                 <div class="property-deed-row mb-3">
                     <div class="row">
-                        <div class="col-md-4">
-                            <input type="text" name="deed_book[]" class="form-control bg-medium text-light" placeholder="Book">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="text" name="deed_page[]" class="form-control bg-medium text-light" placeholder="Page">
-                        </div>
                         <div class="col-md-3">
+                            <input type="text" name="deed_book[]" class="form-control bg-medium text-light" placeholder="Deed Book / Page">
+                        </div>
+                        <div class="col-md-4">
                             <input type="text" name="deed_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                        </div>
+                        <div class="col-md-4">
+                            <div class="custom-file">
+                                <input type="file" name="deed_file[]" class="form-control bg-medium text-light" accept=".pdf,.png,.jpg,.jpeg">
+                            </div>
                         </div>
                         <div class="col-md-1">
                             <button type="button" class="btn btn-sm btn-danger remove-row">
@@ -722,6 +745,33 @@
                 </div>
             `;
             $('#property-deeds-container').append(deedRow);
+        });
+        
+        // Add another attachment button
+        $('#add-attachment-btn').click(function() {
+            const attachmentRow = `
+                <div class="attachment-row mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" name="attachment_name[]" class="form-control bg-medium text-light" placeholder="Document Name">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="attachment_description[]" class="form-control bg-medium text-light" placeholder="Description (optional)">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="custom-file">
+                                <input type="file" name="attachment_file[]" class="form-control bg-medium text-light">
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-danger remove-row">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#attachments-container').append(attachmentRow);
         });
         
         // Add another client email button

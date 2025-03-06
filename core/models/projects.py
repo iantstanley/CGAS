@@ -36,14 +36,12 @@ class Project(models.Model):
         ('pls_review', 'PLS Review'),
         ('on_hold', 'On Hold'),
         ('construction_ongoing', 'Construction Ongoing'),
-        ('pending', 'Pending'),
-        ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
     )
     
     # Basic Project Information
-    project_number = models.CharField(max_length=50, unique=True, blank=True)
+    project_number = models.CharField(max_length=50, unique=True)  # Removed blank=True to make it required
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='projects')
@@ -62,6 +60,7 @@ class Project(models.Model):
     property_tax_parcel = models.CharField(max_length=100, blank=True, null=True, 
                                            verbose_name="Property Tax Parcel Number")
     flood_map_number = models.CharField(max_length=100, blank=True, null=True)
+    flood_zone = models.CharField(max_length=50, blank=True, null=True, verbose_name="Flood Zone")  # Added new field
     base_flood_elevation = models.CharField(max_length=50, blank=True, null=True)
     
     # Geographic Information - NEW FIELDS FOR GIS MODULE

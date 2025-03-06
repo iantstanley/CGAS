@@ -159,15 +159,13 @@ class ProjectForm(forms.ModelForm):
         model = Project
         fields = [
             'project_number', 'title', 'client', 'status',
-            'start_date', 'end_date', 'location', 'assigned_to',
+            'start_date', 'end_date', 'assigned_to',
             'has_legal_contract', 'contract_document', 'legal_name_for_survey',
             'property_address', 'property_tax_parcel', 'flood_map_number',
-            'base_flood_elevation', 'quoted_price', 'quoted_time_frame',
-            'notes', 'description', 'latitude', 'longitude',
-        ]
+            'flood_zone', 'base_flood_elevation', 'quoted_price', 'quoted_time_frame',
+            'latitude', 'longitude',
+        ]  # Removed 'location', 'description', and 'notes'
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 3}),
-            'notes': forms.Textarea(attrs={'rows': 3}),
             'property_address': forms.Textarea(attrs={'rows': 2}),
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
@@ -177,6 +175,7 @@ class ProjectForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['project_number'].widget.attrs['required'] = 'required'
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.form_tag = True
@@ -188,8 +187,6 @@ class ProjectForm(forms.ModelForm):
         # Make project number readonly if it exists
         if self.instance.pk and self.instance.project_number:
             self.fields['project_number'].widget.attrs['readonly'] = True
-        else:
-            self.fields['project_number'].help_text = "Optional. Will be auto-generated if left blank."
         
         self.helper.layout = Layout(
             TabHolder(
@@ -206,12 +203,6 @@ class ProjectForm(forms.ModelForm):
                         Column('start_date', css_class='form-group col-md-6 mb-3'),
                         Column('end_date', css_class='form-group col-md-6 mb-3'),
                     ),
-                    Row(
-                        Column('location', css_class='form-group col-md-12 mb-3'),
-                    ),
-                    Row(
-                        Column('description', css_class='form-group col-md-12 mb-3'),
-                    ),
                 ),
                 Tab('Property Information',
                     Row(
@@ -224,10 +215,10 @@ class ProjectForm(forms.ModelForm):
                         Column('property_tax_parcel', css_class='form-group col-md-12 mb-3'),
                     ),
                     Row(
-                        Column('flood_map_number', css_class='form-group col-md-6 mb-3'),
-                        Column('base_flood_elevation', css_class='form-group col-md-6 mb-3'),
+                        Column('flood_map_number', css_class='form-group col-md-4 mb-3'),
+                        Column('flood_zone', css_class='form-group col-md-4 mb-3'),
+                        Column('base_flood_elevation', css_class='form-group col-md-4 mb-3'),
                     ),
-                    HTML('<hr><h5>Property Deeds & Maps</h5><p class="text-muted">You can add these after saving the project</p>'),
                 ),
                 Tab('Contract & Financial',
                     Row(
@@ -241,14 +232,14 @@ class ProjectForm(forms.ModelForm):
                         Column('quoted_time_frame', css_class='form-group col-md-6 mb-3'),
                     ),
                 ),
-                Tab('Team & Notes',
+                Tab('Team',
                     Row(
                         Column('assigned_to', css_class='form-group col-md-12 mb-3'),
                     ),
-                    Row(
-                        Column('notes', css_class='form-group col-md-12 mb-3'),
-                    ),
                     HTML('<hr><h5>Contact Information</h5><p class="text-muted">You can add additional contact details after saving the project</p>'),
+                ),
+                Tab('Documents',
+                    HTML('<h5>Project Documents</h5><p class="text-muted">You can upload documents, maps, deeds, and other files after saving the project</p>'),
                 ),
             ),
             FormActions(
@@ -348,24 +339,6 @@ class ProjectSearchForm(forms.Form):
         choices=[('', 'All')] + list(Project.STATUS_CHOICES),
         widget=forms.Select(attrs={'class': 'form-select bg-medium text-light'})
     )
-    client = forms.ModelChoiceField(
-        required=False,
-        label='Client',
-        queryset=Client.objects.all(),
-        empty_label="All Clients",
-        widget=forms.Select(attrs={'class': 'form-select bg-medium text-light'})
-    )
-    date_range = forms.ChoiceField(
-        required=False,
-        label='Date Range',
-        choices=[
-            ('', 'All Time'),
-            ('this_week', 'This Week'),
-            ('this_month', 'This Month'),
-            ('this_year', 'This Year'),
-        ],
-        widget=forms.Select(attrs={'class': 'form-select bg-medium text-light'})
-    )
     sort_by = forms.ChoiceField(
         required=False,
         label='Sort By',
@@ -388,16 +361,14 @@ class ProjectSearchForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.form_class = 'form-inline'
         
-        # Modified layout for improved search form appearance
+        # Modified layout for improved search form appearance - removed client and date_range
         self.helper.layout = Layout(
             Row(
                 Column('search', css_class='form-group col-12 mb-3'),
             ),
             Row(
-                Column('status', css_class='form-group col-md-3 mb-3'),
-                Column('client', css_class='form-group col-md-3 mb-3'),
-                Column('date_range', css_class='form-group col-md-3 mb-3'),
-                Column('sort_by', css_class='form-group col-md-2 mb-3'),
+                Column('status', css_class='form-group col-md-6 mb-3'),
+                Column('sort_by', css_class='form-group col-md-5 mb-3'),
                 Column(Submit('submit', 'Search', css_class='btn-primary w-100'), 
                        css_class='form-group col-md-1 mb-3 d-flex align-items-end'),
             )
@@ -652,7 +623,7 @@ class CalendarEventForm(forms.ModelForm):
         
         # Filter active projects for the dropdown
         self.fields['project'].queryset = Project.objects.filter(
-            status__in=['admin', 'field_ready', 'in_progress', 'mapping', 'construction_ongoing']
+            status__in=['admin', 'field_ready', 'mapping', 'construction_ongoing']
         ).order_by('project_number')
         
         self.helper.layout = Layout(
@@ -736,7 +707,7 @@ class CalendarEventSearchForm(forms.Form):
         
         # Filter active projects for the dropdown
         self.fields['project'].queryset = Project.objects.filter(
-            status__in=['admin', 'field_ready', 'in_progress', 'mapping', 'construction_ongoing']
+            status__in=['admin', 'field_ready', 'mapping', 'construction_ongoing']
         ).order_by('project_number')
         
         self.helper.layout = Layout(
@@ -787,4 +758,4 @@ class OrdinanceForm(forms.ModelForm):
                 Submit('submit', 'Save', css_class='btn btn-primary'),
                 css_class='text-right'
             )
-        )        
+        )

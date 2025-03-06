@@ -31,9 +31,9 @@
                             <th>
                                 <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|slice:"0:500" }}&{% endif %}sort=project_number" class="text-light">
                                     Project #
-                                    {% if request.GET.sort == 'project_number' %}
+                                    {% if current_sort == 'project_number' %}
                                         <i class="fas fa-sort-down"></i>
-                                    {% elif request.GET.sort == '-project_number' %}
+                                    {% elif current_sort == '-project_number' %}
                                         <i class="fas fa-sort-up"></i>
                                     {% else %}
                                         <i class="fas fa-sort"></i>
@@ -43,9 +43,9 @@
                             <th>
                                 <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|slice:"0:500" }}&{% endif %}sort=title" class="text-light">
                                     Title
-                                    {% if request.GET.sort == 'title' %}
+                                    {% if current_sort == 'title' %}
                                         <i class="fas fa-sort-down"></i>
-                                    {% elif request.GET.sort == '-title' %}
+                                    {% elif current_sort == '-title' %}
                                         <i class="fas fa-sort-up"></i>
                                     {% else %}
                                         <i class="fas fa-sort"></i>
@@ -55,9 +55,9 @@
                             <th>
                                 <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|slice:"0:500" }}&{% endif %}sort=client__name" class="text-light">
                                     Client
-                                    {% if request.GET.sort == 'client__name' %}
+                                    {% if current_sort == 'client__name' %}
                                         <i class="fas fa-sort-down"></i>
-                                    {% elif request.GET.sort == '-client__name' %}
+                                    {% elif current_sort == '-client__name' %}
                                         <i class="fas fa-sort-up"></i>
                                     {% else %}
                                         <i class="fas fa-sort"></i>
@@ -67,9 +67,9 @@
                             <th>
                                 <a href="?{% if request.GET.urlencode %}{{ request.GET.urlencode|slice:"0:500" }}&{% endif %}sort=status" class="text-light">
                                     Status
-                                    {% if request.GET.sort == 'status' %}
+                                    {% if current_sort == 'status' %}
                                         <i class="fas fa-sort-down"></i>
-                                    {% elif request.GET.sort == '-status' %}
+                                    {% elif current_sort == '-status' %}
                                         <i class="fas fa-sort-up"></i>
                                     {% else %}
                                         <i class="fas fa-sort"></i>
@@ -110,10 +110,6 @@
                                         <span class="badge bg-secondary">On Hold</span>
                                     {% elif project.status == 'construction_ongoing' %}
                                         <span class="badge bg-primary">Construction Ongoing</span>
-                                    {% elif project.status == 'pending' %}
-                                        <span class="badge bg-warning">Pending</span>
-                                    {% elif project.status == 'in_progress' %}
-                                        <span class="badge bg-primary">In Progress</span>
                                     {% elif project.status == 'completed' %}
                                         <span class="badge bg-success">Completed</span>
                                     {% elif project.status == 'cancelled' %}
@@ -205,6 +201,13 @@
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Add sort parameter to table column headers
+        $('th a').on('click', function(e) {
+            e.preventDefault();
+            var url = $(this).attr('href');
+            window.location.href = url;
         });
     });
 </script>

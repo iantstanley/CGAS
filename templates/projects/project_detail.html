@@ -35,8 +35,18 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link" id="contract-tab" data-bs-toggle="tab" data-bs-target="#contract" type="button" role="tab">
+            Contract & Financial
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
             Documents
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="team-tab" data-bs-toggle="tab" data-bs-target="#team" type="button" role="tab">
+            Team
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -46,7 +56,7 @@
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
-            Notes & Comments
+            Comments
         </button>
     </li>
 </ul>
@@ -93,10 +103,6 @@
                                         <span class="badge bg-secondary">On Hold</span>
                                     {% elif project.status == 'construction_ongoing' %}
                                         <span class="badge bg-primary">Construction Ongoing</span>
-                                    {% elif project.status == 'pending' %}
-                                        <span class="badge bg-warning">Pending</span>
-                                    {% elif project.status == 'in_progress' %}
-                                        <span class="badge bg-primary">In Progress</span>
                                     {% elif project.status == 'completed' %}
                                         <span class="badge bg-success">Completed</span>
                                     {% elif project.status == 'cancelled' %}
@@ -259,6 +265,10 @@
                                 <td>{{ project.flood_map_number|default:"Not specified" }}</td>
                             </tr>
                             <tr>
+                                <th>Flood Zone:</th>
+                                <td>{{ project.flood_zone|default:"Not specified" }}</td>
+                            </tr>
+                            <tr>
                                 <th>Base Flood Elevation:</th>
                                 <td>{{ project.base_flood_elevation|default:"Not specified" }}</td>
                             </tr>
@@ -269,69 +279,12 @@
                         </table>
                     </div>
                 </div>
-                
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <h5>Property Deeds</h5>
-                        {% if project.property_deeds.exists %}
-                            <table class="table table-dark">
-                                <thead>
-                                    <tr>
-                                        <th>Book</th>
-                                        <th>Page</th>
-                                        <th>Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for deed in project.property_deeds.all %}
-                                        <tr>
-                                            <td>{{ deed.book }}</td>
-                                            <td>{{ deed.page }}</td>
-                                            <td>{{ deed.description|default:"" }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <p>No property deed information added.</p>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <h5>Property Maps</h5>
-                        {% if project.property_maps.exists %}
-                            <table class="table table-dark">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Description</th>
-                                        <th>File</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for map in project.property_maps.all %}
-                                        <tr>
-                                            <td>{{ map.name }}</td>
-                                            <td>{{ map.description|default:"" }}</td>
-                                            <td>
-                                                <a href="{{ map.file.url }}" class="btn btn-sm btn-info" target="_blank">
-                                                    <i class="fas fa-download"></i> Download
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        {% else %}
-                            <p>No property maps uploaded.</p>
-                        {% endif %}
-                    </div>
-                </div>
             </div>
         </div>
     </div>
     
-    <!-- Documents Tab -->
-    <div class="tab-pane fade" id="documents" role="tabpanel">
+    <!-- Contract & Financial Tab -->
+    <div class="tab-pane fade" id="contract" role="tabpanel">
         <div class="card bg-dark text-light mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">Legal Contract</h5>
@@ -365,11 +318,131 @@
         
         <div class="card bg-dark text-light">
             <div class="card-header">
+                <h5 class="card-title mb-0">Financial Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 200px;">Quoted Price:</th>
+                                <td>
+                                    {% if project.quoted_price %}
+                                        ${{ project.quoted_price|floatformat:2 }}
+                                    {% else %}
+                                        Not specified
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Quoted Time Frame:</th>
+                                <td>{{ project.quoted_time_frame|default:"Not specified" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Documents Tab -->
+    <div class="tab-pane fade" id="documents" role="tabpanel">
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Project Attachments</h5>
-                    <a href="{% url 'project-add-attachment' pk=project.id %}" class="btn btn-primary btn-sm">
+                    <h5 class="card-title mb-0">Property Maps</h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addMapModal">
+                        <i class="fas fa-plus"></i> Add Property Map
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if project.property_maps.exists %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Map Book / Page</th>
+                                    <th>Description</th>
+                                    <th>Uploaded</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for map in project.property_maps.all %}
+                                    <tr>
+                                        <td>{{ map.name }}</td>
+                                        <td>{{ map.description|default:"" }}</td>
+                                        <td>{{ map.uploaded_at|date:"F j, Y" }}</td>
+                                        <td>
+                                            <a href="{{ map.file.url }}" class="btn btn-sm btn-info me-1" target="_blank">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <a href="{% url 'project-delete-map' pk=project.id map_id=map.id %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No property maps uploaded.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Property Deeds</h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDeedModal">
+                        <i class="fas fa-plus"></i> Add Property Deed
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if project.property_deeds.exists %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Book</th>
+                                    <th>Page</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for deed in project.property_deeds.all %}
+                                    <tr>
+                                        <td>{{ deed.book }}</td>
+                                        <td>{{ deed.page }}</td>
+                                        <td>{{ deed.description|default:"" }}</td>
+                                        <td>
+                                            <a href="{% url 'project-delete-deed' pk=project.id deed_id=deed.id %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No property deed information added.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card bg-dark text-light">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Other Attachments</h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAttachmentModal">
                         <i class="fas fa-plus"></i> Add Attachment
-                    </a>
+                    </button>
                 </div>
             </div>
             <div class="card-body">
@@ -406,6 +479,51 @@
                 {% else %}
                     <p>No attachments uploaded for this project.</p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Team Tab -->
+    <div class="tab-pane fade" id="team" role="tabpanel">
+        <div class="card bg-dark text-light mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Team Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Assigned Team Members</h5>
+                        {% if project.assigned_to.exists %}
+                            <ul class="list-group bg-dark">
+                                {% for user in project.assigned_to.all %}
+                                    <li class="list-group-item bg-dark text-light border-secondary">
+                                        {{ user.get_full_name|default:user.email }}
+                                        {% if user.position %}({{ user.position }}){% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No team members assigned yet.</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h5>System Information</h5>
+                        <table class="table table-dark">
+                            <tr>
+                                <th style="width: 200px;">Created By:</th>
+                                <td>{{ project.created_by.get_full_name|default:project.created_by.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>Created:</th>
+                                <td>{{ project.created_at|date:"F j, Y, g:i a" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Updated:</th>
+                                <td>{{ project.updated_at|date:"F j, Y, g:i a" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -542,17 +660,8 @@
         </div>
     </div>
     
-    <!-- Notes & Comments Tab -->
+    <!-- Comments Tab (renamed from Notes & Comments) -->
     <div class="tab-pane fade" id="comments" role="tabpanel">
-        <div class="card bg-dark text-light mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Project Notes</h5>
-            </div>
-            <div class="card-body">
-                {{ project.notes|default:"No notes added."|linebreaks }}
-            </div>
-        </div>
-        
         <div class="card bg-dark text-light">
             <div class="card-header">
                 <h5 class="card-title mb-0">Comments</h5>
@@ -591,6 +700,110 @@
                 {% else %}
                     <p>No comments yet.</p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Property Map Modal -->
+<div class="modal fade" id="addMapModal" tabindex="-1" aria-labelledby="addMapModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMapModalLabel">Add Property Map</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'project-add-map' pk=project.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="map_name" class="form-label">Map Book / Page</label>
+                        <input type="text" name="name" id="map_name" class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="map_description" class="form-label">Description</label>
+                        <input type="text" name="description" id="map_description" class="form-control bg-dark text-light">
+                    </div>
+                    <div class="mb-3">
+                        <label for="map_file" class="form-label">File</label>
+                        <input type="file" name="file" id="map_file" class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Map</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Property Deed Modal -->
+<div class="modal fade" id="addDeedModal" tabindex="-1" aria-labelledby="addDeedModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDeedModalLabel">Add Property Deed</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'project-add-deed' pk=project.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="deed_book" class="form-label">Book</label>
+                        <input type="text" name="book" id="deed_book" class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="deed_page" class="form-label">Page</label>
+                        <input type="text" name="page" id="deed_page" class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="deed_description" class="form-label">Description</label>
+                        <input type="text" name="description" id="deed_description" class="form-control bg-dark text-light">
+                    </div>
+                    <div class="mb-3">
+                        <label for="deed_file" class="form-label">File (Optional)</label>
+                        <input type="file" name="deed_file" id="deed_file" class="form-control bg-dark text-light">
+                        <small class="form-text text-muted">If you upload a file, it will be saved as an attachment.</small>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Deed</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Attachment Modal -->
+<div class="modal fade" id="addAttachmentModal" tabindex="-1" aria-labelledby="addAttachmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAttachmentModalLabel">Add Attachment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" action="{% url 'project-add-attachment' pk=project.id %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="attachment_name" class="form-label">Document Name</label>
+                        <input type="text" name="name" id="attachment_name" class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="attachment_description" class="form-label">Description</label>
+                        <input type="text" name="description" id="attachment_description" class="form-control bg-dark text-light">
+                    </div>
+                    <div class="mb-3">
+                        <label for="attachment_file" class="form-label">File</label>
+                        <input type="file" name="file" id="attachment_file" class="form-control bg-dark text-light" required>
+                    </div>
+                    <div class="text-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Attachment</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

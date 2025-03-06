@@ -35,8 +35,6 @@ class ProjectListView(LoginRequiredMixin, ListView):
         if form.is_valid():
             search_term = form.cleaned_data.get('search')
             status = form.cleaned_data.get('status')
-            client = form.cleaned_data.get('client')
-            date_range = form.cleaned_data.get('date_range')
             sort_by = form.cleaned_data.get('sort_by')
             
             # Apply filters based on search term
@@ -44,8 +42,6 @@ class ProjectListView(LoginRequiredMixin, ListView):
                 queryset = queryset.filter(
                     Q(title__icontains=search_term) |
                     Q(project_number__icontains=search_term) |
-                    Q(description__icontains=search_term) |
-                    Q(location__icontains=search_term) |
                     Q(client__name__icontains=search_term) |
                     Q(property_address__icontains=search_term) |
                     Q(property_tax_parcel__icontains=search_term)
@@ -54,35 +50,6 @@ class ProjectListView(LoginRequiredMixin, ListView):
             # Filter by status if provided
             if status:
                 queryset = queryset.filter(status=status)
-            
-            # Filter by client if provided
-            if client:
-                queryset = queryset.filter(client=client)
-            
-            # Filter by date range if provided
-            if date_range:
-                today = timezone.now().date()
-                
-                if date_range == 'this_week':
-                    start_of_week = today - timezone.timedelta(days=today.weekday())
-                    queryset = queryset.filter(
-                        Q(start_date__gte=start_of_week) | 
-                        Q(end_date__gte=start_of_week)
-                    )
-                
-                elif date_range == 'this_month':
-                    start_of_month = today.replace(day=1)
-                    queryset = queryset.filter(
-                        Q(start_date__gte=start_of_month) | 
-                        Q(end_date__gte=start_of_month)
-                    )
-                
-                elif date_range == 'this_year':
-                    start_of_year = today.replace(month=1, day=1)
-                    queryset = queryset.filter(
-                        Q(start_date__gte=start_of_year) | 
-                        Q(end_date__gte=start_of_year)
-                    )
             
             # Apply sorting if provided
             if sort_by:
@@ -99,6 +66,9 @@ class ProjectListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_form'] = ProjectSearchForm(self.request.GET)
+        # Add sorting information for column headers
+        sort_param = self.request.GET.get('sort', '')
+        context['current_sort'] = sort_param
         return context
 
 class ProjectDetailView(LoginRequiredMixin, DetailView):
@@ -124,42 +94,6 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
         # First save the project to get an ID
         response = super().form_valid(form)
         project = self.object
-        
-        # Process property maps
-        map_names = self.request.POST.getlist('map_name[]')
-        map_descriptions = self.request.POST.getlist('map_description[]')
-        map_files = self.request.FILES.getlist('map_file[]')
-        
-        # Create property maps
-        for i in range(len(map_names)):
-            if i < len(map_files) and map_names[i]:  # Make sure we have a file and a name
-                # Get corresponding description if available
-                description = map_descriptions[i] if i < len(map_descriptions) else ""
-                
-                PropertyMap.objects.create(
-                    project=project,
-                    name=map_names[i],
-                    description=description,
-                    file=map_files[i]
-                )
-        
-        # Process property deeds
-        deed_books = self.request.POST.getlist('deed_book[]')
-        deed_pages = self.request.POST.getlist('deed_page[]')
-        deed_descriptions = self.request.POST.getlist('deed_description[]')
-        
-        # Create property deeds
-        for i in range(len(deed_books)):
-            if deed_books[i] and deed_pages[i]:  # Make sure we have book and page
-                # Get corresponding description if available
-                description = deed_descriptions[i] if i < len(deed_descriptions) else ""
-                
-                PropertyDeed.objects.create(
-                    project=project,
-                    book=deed_books[i],
-                    page=deed_pages[i],
-                    description=description
-                )
         
         # Process client emails
         client_emails = self.request.POST.getlist('client_email[]')
@@ -239,6 +173,71 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
                     phone=phone_numbers[i],
                     description=description,
                     is_primary=is_primary
+                )
+        
+        # NEW CODE: Process property maps
+        map_names = self.request.POST.getlist('map_name[]')
+        map_descriptions = self.request.POST.getlist('map_description[]')
+        map_files = self.request.FILES.getlist('map_file[]')
+        
+        # Create property maps if data is provided
+        for i in range(len(map_names)):
+            if i < len(map_files) and map_names[i] and map_files[i]:
+                # Get corresponding description if available
+                description = map_descriptions[i] if i < len(map_descriptions) else ""
+                
+                PropertyMap.objects.create(
+                    project=project,
+                    name=map_names[i],
+                    description=description,
+                    file=map_files[i]
+                )
+        
+        # NEW CODE: Process property deeds
+        deed_books = self.request.POST.getlist('deed_book[]')
+        deed_descriptions = self.request.POST.getlist('deed_description[]')
+        deed_files = self.request.FILES.getlist('deed_file[]')
+        deed_pages = self.request.POST.getlist('deed_page[]')
+        
+        # Create property deeds if data is provided
+        for i in range(len(deed_books)):
+            if deed_books[i]:
+                # Get corresponding description and file if available
+                description = deed_descriptions[i] if i < len(deed_descriptions) else ""
+                page = deed_pages[i] if i < len(deed_pages) else ""
+                
+                deed = PropertyDeed.objects.create(
+                    project=project,
+                    book=deed_books[i],
+                    page=page,
+                    description=description
+                )
+                
+                # If there's a file, save it as an attachment with the deed name
+                if i < len(deed_files) and deed_files[i]:
+                    ProjectAttachment.objects.create(
+                        project=project,
+                        name=f"Deed {deed_books[i]}-{page}",
+                        description=f"Property deed {deed_books[i]}, page {page}",
+                        file=deed_files[i]
+                    )
+        
+        # NEW CODE: Process other attachments
+        attachment_names = self.request.POST.getlist('attachment_name[]')
+        attachment_descriptions = self.request.POST.getlist('attachment_description[]')
+        attachment_files = self.request.FILES.getlist('attachment_file[]')
+        
+        # Create attachments if data is provided
+        for i in range(len(attachment_names)):
+            if i < len(attachment_files) and attachment_names[i] and attachment_files[i]:
+                # Get corresponding description if available
+                description = attachment_descriptions[i] if i < len(attachment_descriptions) else ""
+                
+                ProjectAttachment.objects.create(
+                    project=project,
+                    name=attachment_names[i],
+                    description=description,
+                    file=attachment_files[i]
                 )
         
         messages.success(self.request, 'Project created successfully!')
@@ -387,15 +386,31 @@ def add_property_deed(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
     if request.method == 'POST':
-        form = PropertyDeedForm(request.POST)
+        book = request.POST.get('book')
+        page = request.POST.get('page', '')
+        description = request.POST.get('description', '')
         
-        if form.is_valid():
-            deed = form.save(commit=False)
-            deed.project = project
-            deed.save()
+        if book:
+            deed = PropertyDeed.objects.create(
+                project=project,
+                book=book,
+                page=page,
+                description=description
+            )
+            
+            # Check if file was uploaded
+            if 'deed_file' in request.FILES:
+                ProjectAttachment.objects.create(
+                    project=project,
+                    name=f"Deed {book}-{page}",
+                    description=f"Property deed {book}, page {page}",
+                    file=request.FILES['deed_file']
+                )
+                
             messages.success(request, 'Property deed added successfully!')
         
-    return redirect('project-update', pk=project.pk)
+    # Redirect to Documents tab
+    return redirect(f'{reverse("project-detail", kwargs={"pk": project.pk})}#documents')
 
 @login_required
 def delete_property_deed(request, pk, deed_id):
@@ -403,22 +418,30 @@ def delete_property_deed(request, pk, deed_id):
     deed = get_object_or_404(PropertyDeed, pk=deed_id, project=project)
     deed.delete()
     messages.success(request, 'Property deed removed successfully!')
-    return redirect('project-update', pk=project.pk)
+    # Redirect to Documents tab
+    return redirect(f'{reverse("project-detail", kwargs={"pk": project.pk})}#documents')
 
 @login_required
 def add_property_map(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
     if request.method == 'POST':
-        form = PropertyMapForm(request.POST, request.FILES)
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
         
-        if form.is_valid():
-            map_obj = form.save(commit=False)
-            map_obj.project = project
-            map_obj.save()
+        if name and 'file' in request.FILES:
+            PropertyMap.objects.create(
+                project=project,
+                name=name,
+                description=description,
+                file=request.FILES['file']
+            )
             messages.success(request, 'Property map added successfully!')
+        else:
+            messages.error(request, 'Name and file are required for property maps.')
         
-    return redirect('project-update', pk=project.pk)
+    # Redirect to Documents tab
+    return redirect(f'{reverse("project-detail", kwargs={"pk": project.pk})}#documents')
 
 @login_required
 def delete_property_map(request, pk, map_id):
@@ -426,24 +449,30 @@ def delete_property_map(request, pk, map_id):
     map_obj = get_object_or_404(PropertyMap, pk=map_id, project=project)
     map_obj.delete()
     messages.success(request, 'Property map removed successfully!')
-    return redirect('project-update', pk=project.pk)
+    # Redirect to Documents tab
+    return redirect(f'{reverse("project-detail", kwargs={"pk": project.pk})}#documents')
 
 @login_required
 def add_project_attachment(request, pk):
     project = get_object_or_404(Project, pk=pk)
     
     if request.method == 'POST':
-        form = ProjectAttachmentForm(request.POST, request.FILES)
+        name = request.POST.get('name')
+        description = request.POST.get('description', '')
         
-        if form.is_valid():
-            attachment = form.save(commit=False)
-            attachment.project = project
-            attachment.save()
+        if name and 'file' in request.FILES:
+            ProjectAttachment.objects.create(
+                project=project,
+                name=name,
+                description=description,
+                file=request.FILES['file']
+            )
             messages.success(request, 'Attachment added successfully!')
         else:
-            messages.error(request, 'Error adding attachment: ' + str(form.errors))
+            messages.error(request, 'Name and file are required for attachments.')
         
-    return redirect('project-detail', pk=project.pk)
+    # Redirect to Documents tab
+    return redirect(f'{reverse("project-detail", kwargs={"pk": project.pk})}#documents')
 
 @login_required
 def delete_project_attachment(request, pk, attachment_id):
@@ -451,7 +480,8 @@ def delete_project_attachment(request, pk, attachment_id):
     attachment = get_object_or_404(ProjectAttachment, pk=attachment_id, project=project)
     attachment.delete()
     messages.success(request, 'Attachment removed successfully!')
-    return redirect('project-detail', pk=project.pk)
+    # Redirect to Documents tab
+    return redirect(f'{reverse("project-detail", kwargs={"pk": project.pk})}#documents')
 
 @login_required
 def add_project_comment(request, pk):
