@@ -9,7 +9,8 @@ from .models import (
     Client, User, Project, ProjectEmail, ProjectBillingEmail, 
     ProjectPhone, PropertyDeed, PropertyMap, ProjectAttachment,
     ProjectComment, FieldCrew, CrewMember, Vehicle, TotalStation, GpsReceiver,
-    DataCollector, MobileHotspot, RtkNetwork, GateCode, CalendarEvent, Ordinance
+    DataCollector, MobileHotspot, RtkNetwork, GateCode, CalendarEvent, Ordinance, 
+    ClientEmail, ClientPhone
 )
 
 class UserRegisterForm(UserCreationForm):
@@ -29,7 +30,7 @@ class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
         fields = [
-            'company_name', 'name', 'contact_person', 
+            'company_name', 'name', 'client_type', 'contact_person', 
             'email', 'billing_email', 'phone', 
             'address', 'city', 'state', 'zip_code', 
             'notes', 'active'
@@ -52,12 +53,16 @@ class ClientForm(forms.ModelForm):
                 Column('name', css_class='form-group col-md-6 mb-3'),
             ),
             Row(
+                Column('client_type', css_class='form-group col-md-6 mb-3'),
                 Column('contact_person', css_class='form-group col-md-6 mb-3'),
-                Column('phone', css_class='form-group col-md-6 mb-3'),
             ),
             Row(
                 Column('email', css_class='form-group col-md-6 mb-3'),
                 Column('billing_email', css_class='form-group col-md-6 mb-3'),
+            ),
+            Row(
+                Column('phone', css_class='form-group col-md-6 mb-3'),
+                HTML('<div class="col-md-6 mb-3"><p class="text-muted">Additional contact details can be added after saving the client</p></div>'),
             ),
             Row(
                 Column('address', css_class='form-group col-md-12 mb-3'),
@@ -86,8 +91,14 @@ class ClientSearchForm(forms.Form):
     )
     status = forms.ChoiceField(
         required=False, 
-        label='',  # Remove the label text
+        label='',
         choices=[('', 'All'), ('active', 'Active'), ('inactive', 'Inactive')],
+        widget=forms.Select(attrs={'class': 'form-select bg-medium text-light'})
+    )
+    client_type = forms.ChoiceField(
+        required=False,
+        label='',
+        choices=[('', 'All Types')] + list(Client.CLIENT_TYPE_CHOICES),
         widget=forms.Select(attrs={'class': 'form-select bg-medium text-light'})
     )
     
@@ -97,24 +108,37 @@ class ClientSearchForm(forms.Form):
         self.helper.form_method = 'get'
         self.helper.form_class = 'form-inline'
         
-        # Modified layout for improved search form appearance
+        # Modified layout for improved search form appearance and alignment
         self.helper.layout = Layout(
             Row(
-                Column('search', css_class='form-group col-md-8 mb-0'),
+                Column('search', css_class='form-group col-md-5 mb-0'),
+                Column('status', css_class='form-group col-md-3 mb-0'),
+                Column('client_type', css_class='form-group col-md-3 mb-0'),
                 Column(
-                    Div(
-                        Div('Status', css_class='small text-muted mb-1'),
-                        'status',
-                        css_class='d-flex flex-column'
-                    ),
-                    css_class='form-group col-md-3 mb-0'
-                ),
-                Column(
-                    Submit('submit', 'Search', css_class='btn-primary w-100 h-100'), 
+                    Submit('submit', 'Search', css_class='btn-primary w-100'), 
                     css_class='form-group col-md-1 mb-0 d-flex align-items-end'
                 ),
+                css_class='row g-2 align-items-end'  # Add gutter spacing
             )
         )
+
+class ClientEmailForm(forms.ModelForm):
+    class Meta:
+        model = ClientEmail
+        fields = ['email', 'label', 'is_primary']
+
+class ClientPhoneForm(forms.ModelForm):
+    class Meta:
+        model = ClientPhone
+        fields = ['phone', 'label', 'is_primary']
+
+ClientEmailFormSet = inlineformset_factory(
+    Client, ClientEmail, form=ClientEmailForm, extra=1, can_delete=True
+)
+
+ClientPhoneFormSet = inlineformset_factory(
+    Client, ClientPhone, form=ClientPhoneForm, extra=1, can_delete=True
+)
 
 class ProjectForm(forms.ModelForm):
     # Add these fields explicitly

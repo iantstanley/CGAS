@@ -1,13 +1,28 @@
 # core/models/__init__.py
-from core.models.users import User, CustomUserManager
-from core.models.clients import Client
-from core.models.projects import (
-    Project, ProjectEmail, ProjectBillingEmail, ProjectPhone,
+# Import all models so they're available when importing from core.models
+
+# Import existing models
+from .users import User
+from .clients import Client, ClientEmail, ClientPhone  # Add the new models here
+from .projects import (
+    Project, ProjectEmail, ProjectPhone, ProjectBillingEmail,
     PropertyDeed, PropertyMap, ProjectAttachment, ProjectComment
 )
-from core.models.field_crews import (
+from .field_crews import (
     FieldCrew, CrewMember, Vehicle, TotalStation,
     GpsReceiver, DataCollector, MobileHotspot, RtkNetwork
 )
-from core.models.resources import GateCode, Ordinance
-from core.models.calendar import CalendarEvent
+from .resources import GateCode, Ordinance
+from .calendar import CalendarEvent
+
+# Make them all accessible at the core.models level
+__all__ = [
+    'User',
+    'Client', 'ClientEmail', 'ClientPhone',  # Add the new models here
+    'Project', 'ProjectEmail', 'ProjectPhone', 'ProjectBillingEmail',
+    'PropertyDeed', 'PropertyMap', 'ProjectAttachment', 'ProjectComment',
+    'FieldCrew', 'CrewMember', 'Vehicle', 'TotalStation',
+    'GpsReceiver', 'DataCollector', 'MobileHotspot', 'RtkNetwork',
+    'GateCode', 'Ordinance',
+    'CalendarEvent',
+]

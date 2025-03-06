@@ -16,7 +16,150 @@
 
 <div class="card bg-dark text-light">
     <div class="card-body">
-        {% crispy form %}
+        <form method="post">
+            {% csrf_token %}
+            {% crispy form %}
+            
+            {% if form.instance.pk %}
+                <hr>
+                <h4>Additional Contact Emails</h4>
+                <div class="formset" id="email-formset">
+                    {{ email_formset.management_form }}
+                    <div class="items">
+                        {% for form in email_formset %}
+                            <div class="item mb-3 pb-2 border-bottom border-secondary">
+                                <div class="row form-row">
+                                    <div class="col-md-5">
+                                        {{ form.email|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.label|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group mt-4">
+                                            <div class="form-check">
+                                                {{ form.is_primary }}
+                                                <label class="form-check-label" for="{{ form.is_primary.id_for_label }}">
+                                                    Is primary contact
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-center justify-content-end">
+                                        {% if email_formset.can_delete %}
+                                            {{ form.DELETE.as_hidden }}
+                                            <button type="button" class="btn btn-sm btn-danger delete-row" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {{ form.id }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-info add-form-row">
+                            <i class="fas fa-plus"></i> Add Another Email
+                        </button>
+                    </div>
+                </div>
+
+                <hr>
+                <h4>Additional Phone Numbers</h4>
+                <div class="formset" id="phone-formset">
+                    {{ phone_formset.management_form }}
+                    <div class="items">
+                        {% for form in phone_formset %}
+                            <div class="item mb-3 pb-2 border-bottom border-secondary">
+                                <div class="row form-row">
+                                    <div class="col-md-5">
+                                        {{ form.phone|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-4">
+                                        {{ form.label|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group mt-4">
+                                            <div class="form-check">
+                                                {{ form.is_primary }}
+                                                <label class="form-check-label" for="{{ form.is_primary.id_for_label }}">
+                                                    Is primary contact
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-center justify-content-end">
+                                        {% if phone_formset.can_delete %}
+                                            {{ form.DELETE.as_hidden }}
+                                            <button type="button" class="btn btn-sm btn-danger delete-row" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {{ form.id }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-info add-form-row">
+                            <i class="fas fa-plus"></i> Add Another Phone
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </form>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Handle formset add button
+        $('.formset').each(function() {
+            var $formset = $(this);
+            var $addButton = $formset.find('.add-form-row');
+            var $totalForms = $formset.find('[id$="TOTAL_FORMS"]');
+            var formCount = parseInt($totalForms.val());
+            
+            $addButton.click(function() {
+                var $items = $formset.find('.items');
+                var newItem = $items.find('.item:first').clone(true);
+                
+                // Update form prefix
+                var regex = new RegExp('form-0', 'g');
+                newItem.html(newItem.html().replace(regex, 'form-' + formCount));
+                
+                // Clear values
+                newItem.find(':input:not([type=hidden])').val('');
+                newItem.find('input[type=checkbox]').prop('checked', false);
+                
+                // Add the new form
+                $items.append(newItem);
+                
+                // Update form count
+                formCount++;
+                $totalForms.val(formCount);
+            });
+            
+            // Handle delete button
+            $formset.on('click', '.delete-row', function() {
+                var $item = $(this).closest('.item');
+                var $deleteCheckbox = $item.find('[id$="-DELETE"]');
+                
+                // If this is a newly added form (hasn't been saved yet)
+                if ($deleteCheckbox.length === 0 || $item.find('[id$="-id"]').val() === '') {
+                    // Just remove it from the DOM
+                    $item.remove();
+                } else {
+                    // For existing items, mark for deletion and hide
+                    $deleteCheckbox.prop('checked', true);
+                    $item.hide();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %}
